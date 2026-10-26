@@ -4,3 +4,10 @@ server/.env
 server//node_modules
 client//node_modules
 server/.env*
+
+server/prisma/generated/prisma
+
+
+server/prisma/generated/prisma
+
+server/prisma/prisma/generated
