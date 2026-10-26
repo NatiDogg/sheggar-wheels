@@ -3,6 +3,7 @@ import {config} from 'dotenv'
 config()
 
 export const envSchema = z.object({
+      PORT: z.string().min(3) ,
      DATABASE_URL: z.string().min(6),
 })
 
