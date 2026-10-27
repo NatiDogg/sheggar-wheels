@@ -1,24 +1,26 @@
-model Car{
-    id String @id @default(uuid())
-    make String
-    model String
-    year Int 
-    capacity Int
-    description String
-    price Int 
-    carImg String
-    status CarStatus @default(PENDING) 
-    owner  User @relation(fields: [ownerId], references: [id])
-    ownerId  String
-    bookings Booking[]
-    conversations Conversation[]
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model Car {
+  id              String       @id @default(uuid())
+  make            String
+  model           String
+  year            Int
+  seatingCapacity Int
+  description     String
+  price           Decimal      @db.Decimal(10, 2)
+  carImg          String
+  status          CarStatus    @default(PENDING)
 
+  owner           User         @relation(fields: [ownerId], references: [id])
+  ownerId         String
+
+  bookings        Booking[]
+  conversations   Conversation[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 
-enum CarStatus{
-      PENDING
-      APPROVED
-      REJECTED
+enum CarStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

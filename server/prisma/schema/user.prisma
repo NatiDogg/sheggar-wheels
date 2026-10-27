@@ -13,6 +13,7 @@ model User{
     bookings Booking[]
     messages Message[]
     notifications Notification[]
+    feedbacks  Feedback[]
     renterConversations Conversation[] @relation("ConversationRenter")
     ownerConversations  Conversation[] @relation("ConversationOwner")
 

@@ -1,0 +1,16 @@
+model Payment {
+    id             String        @id @default(uuid())
+    booking        Booking       @relation(fields: [bookingId], references: [id])
+    bookingId      String        @unique
+    amount         Decimal       @db.Decimal(10, 2)
+    status         PaymentStatus @default(PENDING)
+    paymentDate    DateTime?
+    chapaReference String?
+    createdAt      DateTime      @default(now())
+}
+
+enum PaymentStatus {
+    PENDING
+    COMPLETED
+    FAILED
+}
