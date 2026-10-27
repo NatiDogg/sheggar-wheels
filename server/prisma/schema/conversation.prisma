@@ -9,4 +9,6 @@ model Conversation{
     messages Message[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@unique([renterId, ownerId, carId])
 }

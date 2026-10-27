@@ -7,4 +7,6 @@ model Feedback{
     booking Booking @relation(fields: [bookingId], references: [id])
     bookingId String @unique
     createdAt  DateTime @default(now())
+
+
 }
