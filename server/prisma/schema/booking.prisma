@@ -5,12 +5,12 @@ model Booking{
     totalPrice Int
     paymentDeadline DateTime?
     status  BookingStatus @default(PENDING)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
     car  Car @relation(fields: [carId], references: [id])
     carId String
     renter User @relation(fields: [renterId], references: [id])
     renterId String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 enum BookingStatus{

@@ -1,0 +1,11 @@
+model Conversation{
+    id String @id @default(uuid())
+   renter User @relation("ConversationRenter", fields: [renterId], references: [id])
+    renterId String
+    owner  User @relation("ConversationOwner", fields: [ownerId], references: [id])
+    ownerId String
+    car Car @relation(fields: [carId], references: [id])
+    carId String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}

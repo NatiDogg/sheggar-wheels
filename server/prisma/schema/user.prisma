@@ -11,6 +11,8 @@ model User{
     updatedAt DateTime @updatedAt
     cars     Car[]
     bookings Booking[]
+    renterConversations Conversation[] @relation("ConversationRenter")
+    ownerConversations  Conversation[] @relation("ConversationOwner")
 
 
 
