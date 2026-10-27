@@ -10,6 +10,7 @@ model Car{
     status CarStatus @default(PENDING) 
     owner  User @relation(fields: [ownerId], references: [id])
     ownerId  String
+    bookings Booking[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
