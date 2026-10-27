@@ -6,6 +6,7 @@ model Conversation{
     ownerId String
     car Car @relation(fields: [carId], references: [id])
     carId String
+    messages Message[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
