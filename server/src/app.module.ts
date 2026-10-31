@@ -3,10 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { AuthSharedModuleModule } from './auth-shared-module/auth-shared-module.module';
+import { AuthCommonModule } from './auth-shared-module/auth-shared-module.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, AuthSharedModuleModule],
+  imports: [PrismaModule, AuthModule, AuthCommonModule],
   controllers: [AppController],
   providers: [AppService],
 })
