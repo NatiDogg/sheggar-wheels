@@ -6,7 +6,11 @@ export const envSchema = z.object({
       PORT: z.string().min(3) ,
      DATABASE_URL: z.string().min(6),
      JWT_ACCESS_TOKEN_SECRET_KEY: z.string().min(5),
-     JWT_REFRESH_TOKEN_SECRET_KEY: z.string().min(5)
+     JWT_REFRESH_TOKEN_SECRET_KEY: z.string().min(5),
+     GOOGLE_CLIENT_ID: z.string().min(5),
+     GOOGLE_CLIENT_SECRET: z.string().min(5),
+     callbackURL: z.string().min(5)
+
 })
 
 export const validate = (config:Record<string, unknown>)=>{
