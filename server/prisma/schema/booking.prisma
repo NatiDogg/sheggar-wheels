@@ -24,8 +24,9 @@ model Booking {
 enum BookingStatus {
   PENDING
   APPROVED
+  IN_PROGRESS
+  COMPLETED
   REJECTED
   CANCELLED
-  COMPLETED
   EXPIRED
 }
