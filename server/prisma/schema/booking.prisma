@@ -22,11 +22,12 @@ model Booking {
 }
 
 enum BookingStatus {
-  PENDING
-  APPROVED
-  IN_PROGRESS
-  COMPLETED
-  REJECTED
-  CANCELLED
-  EXPIRED
+  PENDING    //	Renter requested the booking; waiting for owner approval.
+  APPROVED   // Owner accepted; waiting for payment.
+
+  IN_PROGRESS  // Payment is complete and the rental period has started. 
+  COMPLETED    //	Rental period has ended.
+  REJECTED     // 	Owner rejected the request.
+  CANCELLED    // 	Booking was cancelled.
+  EXPIRED        // Payment deadline passed without successful payment.
 }
