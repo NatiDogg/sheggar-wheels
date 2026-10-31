@@ -4,10 +4,25 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthCommonModule } from './auth-shared-module/auth-shared-module.module';
-
+import { ConfigModule } from '@nestjs/config';
+import { validate } from './utils/zodEnvValidator';
+import {ThrottlerGuard, ThrottlerModule} from '@nestjs/throttler'
+import { APP_GUARD } from '@nestjs/core';
 @Module({
-  imports: [PrismaModule, AuthModule, AuthCommonModule],
+  imports: [
+
+    ConfigModule.forRoot({
+       isGlobal: true,
+       validate
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ttl: 60000, limit: 20}]
+    }),
+    PrismaModule, AuthModule, AuthCommonModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, {
+     provide: APP_GUARD,
+     useClass: ThrottlerGuard
+  }],
 })
 export class AppModule {}
