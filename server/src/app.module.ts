@@ -9,6 +9,7 @@ import { validate } from './utils/zodEnvValidator';
 import {ThrottlerGuard, ThrottlerModule} from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
+import { EventsModule } from './events/events.module';
 @Module({
   imports: [
 
@@ -19,7 +20,7 @@ import { UserModule } from './user/user.module';
     ThrottlerModule.forRoot({
       throttlers: [{ttl: 60000, limit: 20}]
     }),
-    PrismaModule, AuthModule, AuthCommonModule, UserModule],
+    PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule],
   controllers: [AppController],
   providers: [AppService, {
      provide: APP_GUARD,

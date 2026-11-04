@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
 import { JwtService, TokenPayload } from 'src/utils/jwtService';
+import { RegisterDto } from './dto/registerDto';
 
 @Injectable()
 export class AuthService {
@@ -10,7 +11,25 @@ export class AuthService {
       
       constructor(private readonly userService:UserService, private readonly jwtService:JwtService, private readonly bcryptService: BcryptService){}
 
-      async signUp(){
+      async signUp(registerDetails: RegisterDto){
+      const normalizedEmail = registerDetails.email.toLowerCase()
+      const existingUser = await this.userService.findUserByEmail(normalizedEmail)
+
+      if(existingUser){
+            throw new ConflictException('A user with this email address already exists.')
+      }
+
+      const hashedPassword = await this.bcryptService.hashPassword(registerDetails.password)
+
+      const newlyCreatedUser = await this.userService.registerUser({...registerDetails, email: normalizedEmail, password: hashedPassword})
+
+      const verifyToken = this.jwtService.createAccessToken({id: newlyCreatedUser.id, name: newlyCreatedUser.name, email: newlyCreatedUser.email, role: newlyCreatedUser.role})
+
+      
+
+        
+
+
 
       }
 
