@@ -4,12 +4,13 @@ import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
 import { JwtService, TokenPayload } from 'src/utils/jwtService';
 import { RegisterDto } from './dto/registerDto';
+import { UserEventsService } from 'src/events/userEventsService';
 
 @Injectable()
 export class AuthService {
 
       
-      constructor(private readonly userService:UserService, private readonly jwtService:JwtService, private readonly bcryptService: BcryptService){}
+      constructor(private readonly userService:UserService, private readonly jwtService:JwtService, private readonly bcryptService: BcryptService, private readonly userEventService:UserEventsService){}
 
       async signUp(registerDetails: RegisterDto){
       const normalizedEmail = registerDetails.email.toLowerCase()
@@ -25,7 +26,16 @@ export class AuthService {
 
       const verifyToken = this.jwtService.createAccessToken({id: newlyCreatedUser.id, name: newlyCreatedUser.name, email: newlyCreatedUser.email, role: newlyCreatedUser.role})
 
-      
+
+      // emitting user registration event to send email to verify email
+
+      this.userEventService.emitUserRegistered(newlyCreatedUser, verifyToken)
+
+      return {
+            success: true,
+            message: 'User registered successfully. Please check your email to verify.'
+      }
+
 
         
 

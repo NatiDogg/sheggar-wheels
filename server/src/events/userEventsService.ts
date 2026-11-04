@@ -8,8 +8,9 @@ export interface UserRegisteredEvent{
           id: string,
           email: string,
           
-      },
-      registeredAt: Date
+      };
+      verifyToken: string;
+      registeredAt: Date;
 }
 @Injectable()
 
@@ -17,13 +18,14 @@ export class UserEventsService{
 
      constructor(private readonly eventEmitter:EventEmitter2){}
 
-     emitUserRegistered(user:Omit<User, 'password'>){
+     emitUserRegistered(user:Omit<User, 'password'>, verifyToken: string){
 
           const userRegisteredEventData:UserRegisteredEvent = {
               user: {
                  id: user.id,
                  email: user.email
               },
+              verifyToken,
               registeredAt: user.createdAt
           }
 
