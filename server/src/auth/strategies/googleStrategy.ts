@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import {Strategy, VerifyCallback} from 'passport-google-oauth20'
 import {env} from '../../utils/zodEnvValidator'
@@ -18,6 +18,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy){
       validate(accessToken: string, refreshToken: string, profile:any, done: VerifyCallback) {
 
          const {name, emails, photos} = profile
+
+         if(!emails || !emails[0] || !emails[0].verified){
+           throw new UnauthorizedException('Google account email is not verified.');
+         }
 
          const user = {
              email: emails[0].value,

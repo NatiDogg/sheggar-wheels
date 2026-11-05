@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { Prisma } from 'prisma/generated/prisma/client';
+import { Prisma, Provider } from 'prisma/generated/prisma/client';
 
-import { RegisterDto } from 'src/auth/dto/registerDto';
+
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -13,12 +13,16 @@ export class UserService {
 
 
 
-         async registerUser(userDetails: RegisterDto){
+         async registerUser(userDetails: {name: string, email: string, password?: string}, isVerifed?: boolean, provider?: Provider){
 
               try {
 
                 return await this.prisma.user.create({data: {
-                     ...userDetails
+                   name: userDetails.name,
+                   email: userDetails.email,
+                   password: userDetails.password ?? null,
+                   emailVerified: isVerifed ?? false,
+                   provider: provider ?? 'LOCAL'
                 }, omit: {password: true}})
                 
               } catch (error) {
@@ -34,6 +38,13 @@ export class UserService {
          async findUserByEmail(email: string){
           
              return await this.prisma.user.findUnique({where: {email}})
+         }
+
+         async updateEmailVerifiedStatus(id: string, isVerifed: boolean){
+             return await this.prisma.user.update({
+                  where: { id },
+                 data: { emailVerified: isVerifed },
+             });
          }
 
          
