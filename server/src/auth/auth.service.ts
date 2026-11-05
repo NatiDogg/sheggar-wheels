@@ -56,7 +56,7 @@ export class AuthService {
           const user = await this.userService.findUserByEmail(normalizedEmail)
 
           if(!user){
-            return
+             return
           }
 
           const {password, ...safeUser} = user
