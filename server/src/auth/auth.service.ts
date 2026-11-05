@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from 'prisma/generated/prisma/client';
+import { Provider, User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
 import { JwtService, TokenPayload } from 'src/utils/jwtService';
@@ -75,7 +75,7 @@ export class AuthService {
 
       const {password, ...safeUser} = user
 
-      return this.generateUserTokenResponse(user, 'User LoggedIn Successfully' )
+      return this.generateUserTokenResponse(safeUser, 'User LoggedIn Successfully' )
 
   }
 
@@ -89,9 +89,11 @@ export class AuthService {
     let user:any = await this.userService.findUserByEmail(normalizedEmail);
 
     if (!user) {
+       const provider:Provider = 'GOOGLE'
       user = await this.userService.registerUser(
         { name: googleUser.name, email: normalizedEmail },
         googleUser.isemailverified,
+        provider
       );
     } 
     else {
