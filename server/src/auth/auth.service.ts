@@ -5,6 +5,7 @@ import { BcryptService } from 'src/utils/bcryptService';
 import { JwtService, TokenPayload } from 'src/utils/jwtService';
 import { RegisterDto } from './dto/registerDto';
 import { UserEventsService } from 'src/events/userEventsService';
+import { LoginDto } from './dto/loginDto';
 
 @Injectable()
 export class AuthService {
@@ -54,7 +55,29 @@ export class AuthService {
     };
   }
 
-  async login() {}
+  async login(userDetails:LoginDto) {
+
+      const normalizedEmail = userDetails.email.toLowerCase()
+      const user = await this.userService.findUserByEmail(normalizedEmail)
+      if(!user){
+          throw new UnauthorizedException('Invalid Credentials!')
+      }
+
+      if(!user.password){
+        throw new UnauthorizedException('This account uses Google Sign-In. Please log in with Google.');
+      }
+
+      const comparedPassword = await this.bcryptService.matchPassword(userDetails.password, user.password)
+
+      if(!comparedPassword){
+          throw new UnauthorizedException('Invalid Credentials!')
+      }
+
+      const {password, ...safeUser} = user
+
+      return this.generateUserTokenResponse(user, 'User LoggedIn Successfully' )
+
+  }
 
   async validateGoogleUser(googleUser: {
     email: string;
