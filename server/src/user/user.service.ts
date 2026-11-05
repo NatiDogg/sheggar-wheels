@@ -13,12 +13,15 @@ export class UserService {
 
 
 
-         async registerUser(userDetails: RegisterDto){
+         async registerUser(userDetails: {name: string, email: string, password?: string}, isVerifed?: boolean){
 
               try {
 
                 return await this.prisma.user.create({data: {
-                     ...userDetails
+                   name: userDetails.name,
+                   email: userDetails.email,
+                   password: userDetails.password ?? null,
+                   emailVerified: isVerifed ?? false
                 }, omit: {password: true}})
                 
               } catch (error) {
@@ -34,6 +37,13 @@ export class UserService {
          async findUserByEmail(email: string){
           
              return await this.prisma.user.findUnique({where: {email}})
+         }
+
+         async updateEmailVerifiedStatus(id: string, isVerifed: boolean){
+             return await this.prisma.user.update({
+                  where: { id },
+                 data: { emailVerified: isVerifed },
+             });
          }
 
          
