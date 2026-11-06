@@ -91,7 +91,7 @@ export class AuthService {
     if (!user) {
        const provider:Provider = 'GOOGLE'
       user = await this.userService.registerUser(
-        { name: googleUser.name, email: normalizedEmail },
+        { name: googleUser.name, email: normalizedEmail,profileImg: googleUser.profileImg },
         googleUser.isemailverified,
         provider
       );
