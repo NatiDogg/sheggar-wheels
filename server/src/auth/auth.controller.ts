@@ -1,4 +1,4 @@
-import { Controller,UseGuards,Get,Post, Body } from '@nestjs/common';
+import { Controller,UseGuards,Get,Post, Body, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
@@ -23,6 +23,26 @@ export class AuthController {
        @Post('login')
        async login(@Body() loginDetails:LoginDto){
            return await this.authService.login(loginDetails)
+       }
+
+       @Get('google')
+       @UseGuards(GoogleAuthGuard)
+       async googleAuth(@Req() req: Request){
+
+       }
+
+
+       @Get('google/callback')
+        @UseGuards(GoogleAuthGuard)
+       async googleAuthRedirect(@Req() req:Request){
+           const googleUser = (req as any).user as {
+              email: string;
+             isemailverified: boolean;
+              name: string;
+             profileImg: string;
+           }
+
+           return await this.authService.validateGoogleUser(googleUser)
        }
 
      
