@@ -13,7 +13,7 @@ export class UserService {
 
 
 
-         async registerUser(userDetails: {name: string, email: string, password?: string}, isVerifed?: boolean, provider?: Provider){
+         async registerUser(userDetails: {name: string, email: string, password?: string, profileImg?: string}, isVerifed?: boolean, provider?: Provider){
 
               try {
 
@@ -21,6 +21,7 @@ export class UserService {
                    name: userDetails.name,
                    email: userDetails.email,
                    password: userDetails.password ?? null,
+                   profileImg: userDetails.profileImg ?? null,
                    emailVerified: isVerifed ?? false,
                    provider: provider ?? 'LOCAL'
                 }, omit: {password: true}})
