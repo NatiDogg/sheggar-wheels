@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
 import { Throttle } from '@nestjs/throttler';
+import { LoginDto } from './dto/loginDto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,6 +17,12 @@ export class AuthController {
        @Post('register')
        async signUp(@Body() registrationDetails:RegisterDto){
           return await this.authService.signUp(registrationDetails)
+       }
+
+       @Throttle({default: {limit: 4, ttl: 60000}})
+       @Post('login')
+       async login(@Body() loginDetails:LoginDto){
+           return await this.authService.login(loginDetails)
        }
 
      
