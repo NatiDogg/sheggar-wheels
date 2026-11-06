@@ -18,7 +18,7 @@ import { EventsModule } from './events/events.module';
        validate
     }),
     ThrottlerModule.forRoot({
-      throttlers: [{ttl: 60000, limit: 20}]
+      throttlers: [{ttl: 60000, limit: 50}]
     }),
     PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule],
   controllers: [AppController],
