@@ -67,6 +67,10 @@ export class AuthService {
         throw new UnauthorizedException('This account uses Google Sign-In. Please log in with Google.');
       }
 
+      if(!user.emailVerified){
+         throw new UnauthorizedException("Your account hasn't been verified yet. Please check your email to continue.")
+      }
+
       const comparedPassword = await this.bcryptService.matchPassword(userDetails.password, user.password)
 
       if(!comparedPassword){
@@ -108,7 +112,11 @@ export class AuthService {
   }
 
   async forgetPassword(){
-    
+
+  }
+
+  async resetPassword(){
+
   }
 
   private generateUserTokenResponse(

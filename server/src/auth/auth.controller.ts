@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Get, Post, Body, Req } from '@nestjs/common';
+import { Controller, UseGuards, Get, Post, Body, Req, Query, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
@@ -51,5 +51,15 @@ export class AuthController {
            };
 
            return await this.authService.validateGoogleUser(googleUser);
+       }
+
+       @Post('verify-email')
+       async verifyEmailHandler(@Query('token') token: string){
+           
+            if(!token){
+                 throw new BadRequestException('Verification token is required');
+            }
+
+        
        }
 }
