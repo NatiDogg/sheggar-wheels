@@ -17,7 +17,7 @@ export class AuthController {
        @ApiResponse({ status: 409, description: 'Email already in use.' })
        @Throttle({ default: { limit: 5, ttl: 60000 } })
        @Post('register')
-       async signUp(@Body() registrationDetails: RegisterDto) {
+       async signUpHandler(@Body() registrationDetails: RegisterDto) {
           return await this.authService.signUp(registrationDetails);
        }
 
@@ -26,7 +26,7 @@ export class AuthController {
        @ApiResponse({ status: 401, description: 'Invalid credentials or account uses Google Sign-In.' })
        @Throttle({ default: { limit: 4, ttl: 60000 } })
        @Post('login')
-       async login(@Body() loginDetails: LoginDto) {
+       async loginHandler(@Body() loginDetails: LoginDto) {
            return await this.authService.login(loginDetails);
        }
 
@@ -34,7 +34,7 @@ export class AuthController {
        @ApiResponse({ status: 302, description: 'Redirect to Google.' })
        @Get('google')
        @UseGuards(GoogleAuthGuard)
-       async googleAuth(@Req() req: Request) {
+       async googleAuthHandler(@Req() req: Request) {
            // Handled entirely by passport guard redirect
        }
 
@@ -42,7 +42,7 @@ export class AuthController {
        @ApiResponse({ status: 200, description: 'Google sign-in successful, returns user session and tokens.' })
        @Get('google/callback')
        @UseGuards(GoogleAuthGuard)
-       async googleAuthRedirect(@Req() req: Request) {
+       async googleAuthRedirectHandler(@Req() req: Request) {
            const googleUser = (req as any).user as {
               email: string;
               isemailverified: boolean;

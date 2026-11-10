@@ -107,6 +107,10 @@ export class AuthService {
     return this.generateUserTokenResponse(safeUser, 'User LoggedIn Successfully');
   }
 
+  async forgetPassword(){
+    
+  }
+
   private generateUserTokenResponse(
     user: Omit<User, 'password'>,
     message: string,
