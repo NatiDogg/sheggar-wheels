@@ -1,11 +1,12 @@
-import { Controller, UseGuards, Get, Post, Body, Req, Query, BadRequestException } from '@nestjs/common';
+import { Controller, UseGuards, Get, Post, Body, Req, Query, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/loginDto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-
+import type { Request, Response } from 'express';
+import {env} from '../utils/zodEnvValidator'
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -53,14 +54,21 @@ export class AuthController {
            return await this.authService.validateGoogleUser(googleUser);
        }
 
-       @Post('verify-email')
-       async verifyEmailHandler(@Query('token') token: string){
+       @Get('verify-email')
+       async verifyEmailHandler(@Query('token') token: string, @Res() res: Response){
            
             if(!token){
-                 throw new BadRequestException('Verification token is required');
+                return res.redirect(`${env.FRONTEND_URL}/login?error=missing_token`)
             }
 
-            return await this.authService.verifyEmail(token)
+           try {
+             await this.authService.verifyEmail(token)
+             res.redirect(`${env.FRONTEND_URL}/login?verified=true`)
+           } catch (error) {
+               res.redirect(`${env.FRONTEND_URL}/login?verified=false`)
+           }
+
+          
 
         
        }
