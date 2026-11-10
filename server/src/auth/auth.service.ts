@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Provider, User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
@@ -67,6 +67,10 @@ export class AuthService {
         throw new UnauthorizedException('This account uses Google Sign-In. Please log in with Google.');
       }
 
+      if(!user.emailVerified){
+         throw new UnauthorizedException("Your account hasn't been verified yet. Please check your email to continue.")
+      }
+
       const comparedPassword = await this.bcryptService.matchPassword(userDetails.password, user.password)
 
       if(!comparedPassword){
@@ -105,6 +109,29 @@ export class AuthService {
     const {password, ...safeUser} = user
 
     return this.generateUserTokenResponse(safeUser, 'User LoggedIn Successfully');
+  }
+
+  async verifyEmail(token: string){
+
+     let payload:TokenPayload;
+     try {
+     payload = this.jwtService.verifyAccessToken(token);
+     } catch (error) {
+      throw new BadRequestException('Invalid or expired verification token.');
+     }
+      await this.userService.updateEmailVerifiedStatus(payload.id, true)
+     return {
+      success: true,
+      message: 'Email verified successfully! You can now log in.',
+    };
+  }
+
+  async forgetPassword(){
+
+  }
+
+  async resetPassword(){
+
   }
 
   private generateUserTokenResponse(

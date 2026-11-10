@@ -1,10 +1,12 @@
-import { Controller, UseGuards, Get, Post, Body, Req } from '@nestjs/common';
+import { Controller, UseGuards, Get, Post, Body, Req, Query, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/loginDto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
+import { env } from '../utils/zodEnvValidator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -17,7 +19,7 @@ export class AuthController {
        @ApiResponse({ status: 409, description: 'Email already in use.' })
        @Throttle({ default: { limit: 5, ttl: 60000 } })
        @Post('register')
-       async signUp(@Body() registrationDetails: RegisterDto) {
+       async signUpHandler(@Body() registrationDetails: RegisterDto) {
           return await this.authService.signUp(registrationDetails);
        }
 
@@ -26,7 +28,7 @@ export class AuthController {
        @ApiResponse({ status: 401, description: 'Invalid credentials or account uses Google Sign-In.' })
        @Throttle({ default: { limit: 4, ttl: 60000 } })
        @Post('login')
-       async login(@Body() loginDetails: LoginDto) {
+       async loginHandler(@Body() loginDetails: LoginDto) {
            return await this.authService.login(loginDetails);
        }
 
@@ -34,7 +36,7 @@ export class AuthController {
        @ApiResponse({ status: 302, description: 'Redirect to Google.' })
        @Get('google')
        @UseGuards(GoogleAuthGuard)
-       async googleAuth(@Req() req: Request) {
+       async googleAuthHandler(@Req() req: Request) {
            // Handled entirely by passport guard redirect
        }
 
@@ -42,7 +44,7 @@ export class AuthController {
        @ApiResponse({ status: 200, description: 'Google sign-in successful, returns user session and tokens.' })
        @Get('google/callback')
        @UseGuards(GoogleAuthGuard)
-       async googleAuthRedirect(@Req() req: Request) {
+       async googleAuthRedirectHandler(@Req() req: Request) {
            const googleUser = (req as any).user as {
               email: string;
               isemailverified: boolean;
@@ -51,5 +53,22 @@ export class AuthController {
            };
 
            return await this.authService.validateGoogleUser(googleUser);
+       }
+
+       @ApiOperation({ summary: 'Verify user email via token link' })
+       @ApiQuery({ name: 'token', required: true, description: 'JWT verification token received via email' })
+       @ApiResponse({ status: 302, description: 'Redirects to frontend login page with success or failure query parameters.' })
+       @Get('verify-email')
+       async verifyEmailHandler(@Query('token') token: string, @Res() res: Response){
+            if(!token){
+                return res.redirect(`${env.FRONTEND_URL}/login?error=missing_token`);
+            }
+
+           try {
+             await this.authService.verifyEmail(token);
+             return res.redirect(`${env.FRONTEND_URL}/login?verified=true`);
+           } catch (error) {
+             return res.redirect(`${env.FRONTEND_URL}/login?verified=false`);
+           }
        }
 }
