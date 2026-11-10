@@ -10,7 +10,8 @@ export const envSchema = z.object({
      GOOGLE_CLIENT_ID: z.string().min(5),
      GOOGLE_CLIENT_SECRET: z.string().min(5),
      callbackURL: z.string().min(5),
-     FRONTEND_URL: z.string().min(5)
+     FRONTEND_URL: z.string().min(5),
+     NODE_ENV: z.string().min(5)
 
 })
 

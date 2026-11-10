@@ -7,6 +7,28 @@ import { LoginDto } from './dto/loginDto';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { env } from '../utils/zodEnvValidator';
+import { JwtAuthGuard } from './guards/jwtAuthGuard';
+import { CurrentUser } from './decorators/currentUserDecorator';
+import { User } from 'prisma/generated/prisma/client';
+
+
+const setResponseCookies = (res: Response, tokens: { accessToken: string; refreshToken: string }) => {
+      const isProduction = env.NODE_ENV === 'production';
+
+      res.cookie('accessToken', tokens.accessToken, {
+          httpOnly: true,                       
+          secure: isProduction,        
+          sameSite: isProduction ? 'none' : 'lax',
+          maxAge: 15 * 60 * 1000,         
+      });
+
+      res.cookie('refreshToken', tokens.refreshToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? 'none' : 'lax',
+          maxAge: 7 * 24 * 60 * 60 * 1000,      
+      });
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -28,8 +50,14 @@ export class AuthController {
        @ApiResponse({ status: 401, description: 'Invalid credentials or account uses Google Sign-In.' })
        @Throttle({ default: { limit: 4, ttl: 60000 } })
        @Post('login')
-       async loginHandler(@Body() loginDetails: LoginDto) {
-           return await this.authService.login(loginDetails);
+       async loginHandler(@Body() loginDetails: LoginDto, @Res({passthrough: true}) res:Response) {
+
+          const {accessToken, refreshToken, ...result} = await this.authService.login(loginDetails);
+
+          setResponseCookies(res, {accessToken: accessToken, refreshToken: refreshToken})
+
+          return result
+         
        }
 
        @ApiOperation({ summary: 'Redirects to Google OAuth 2.0 consent screen' })
@@ -44,7 +72,7 @@ export class AuthController {
        @ApiResponse({ status: 200, description: 'Google sign-in successful, returns user session and tokens.' })
        @Get('google/callback')
        @UseGuards(GoogleAuthGuard)
-       async googleAuthRedirectHandler(@Req() req: Request) {
+       async googleAuthRedirectHandler(@Req() req: Request, @Res() res:Response) {
            const googleUser = (req as any).user as {
               email: string;
               isemailverified: boolean;
@@ -52,7 +80,11 @@ export class AuthController {
               profileImg: string;
            };
 
-           return await this.authService.validateGoogleUser(googleUser);
+           const {accessToken,refreshToken, ...result}  = await this.authService.validateGoogleUser(googleUser);
+
+           setResponseCookies(res, {accessToken: accessToken, refreshToken: refreshToken})
+
+           return res.redirect(`${env.FRONTEND_URL ||  "http://localhost:3000"}/auth/success`)
        }
 
        @ApiOperation({ summary: 'Verify user email via token link' })
@@ -70,5 +102,11 @@ export class AuthController {
            } catch (error) {
              return res.redirect(`${env.FRONTEND_URL}/login?verified=false`);
            }
+       }
+
+       @UseGuards(JwtAuthGuard)
+       @Get('profile')
+       async getProfile(@CurrentUser() user: Omit<User, 'password'>){
+          return {user: user}
        }
 }
