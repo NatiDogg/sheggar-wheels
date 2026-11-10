@@ -4,9 +4,10 @@ import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
 import { Throttle } from '@nestjs/throttler';
 import { LoginDto } from './dto/loginDto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import {env} from '../utils/zodEnvValidator'
+import { env } from '../utils/zodEnvValidator';
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -54,22 +55,20 @@ export class AuthController {
            return await this.authService.validateGoogleUser(googleUser);
        }
 
+       @ApiOperation({ summary: 'Verify user email via token link' })
+       @ApiQuery({ name: 'token', required: true, description: 'JWT verification token received via email' })
+       @ApiResponse({ status: 302, description: 'Redirects to frontend login page with success or failure query parameters.' })
        @Get('verify-email')
        async verifyEmailHandler(@Query('token') token: string, @Res() res: Response){
-           
             if(!token){
-                return res.redirect(`${env.FRONTEND_URL}/login?error=missing_token`)
+                return res.redirect(`${env.FRONTEND_URL}/login?error=missing_token`);
             }
 
            try {
-             await this.authService.verifyEmail(token)
-             res.redirect(`${env.FRONTEND_URL}/login?verified=true`)
+             await this.authService.verifyEmail(token);
+             return res.redirect(`${env.FRONTEND_URL}/login?verified=true`);
            } catch (error) {
-               res.redirect(`${env.FRONTEND_URL}/login?verified=false`)
+             return res.redirect(`${env.FRONTEND_URL}/login?verified=false`);
            }
-
-          
-
-        
        }
 }
