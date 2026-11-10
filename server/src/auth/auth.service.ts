@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Provider, User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
@@ -109,6 +109,21 @@ export class AuthService {
     const {password, ...safeUser} = user
 
     return this.generateUserTokenResponse(safeUser, 'User LoggedIn Successfully');
+  }
+
+  async verifyEmail(token: string){
+
+     let payload:TokenPayload;
+     try {
+     payload = this.jwtService.verifyAccessToken(token);
+     } catch (error) {
+      throw new BadRequestException('Invalid or expired verification token.');
+     }
+      await this.userService.updateEmailVerifiedStatus(payload.id, true)
+     return {
+      success: true,
+      message: 'Email verified successfully! You can now log in.',
+    };
   }
 
   async forgetPassword(){

@@ -60,6 +60,8 @@ export class AuthController {
                  throw new BadRequestException('Verification token is required');
             }
 
+            return await this.authService.verifyEmail(token)
+
         
        }
 }
