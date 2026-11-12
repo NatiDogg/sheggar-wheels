@@ -10,16 +10,18 @@ import { env } from '../utils/zodEnvValidator';
 import { JwtAuthGuard } from './guards/jwtAuthGuard';
 import { CurrentUser } from './decorators/currentUserDecorator';
 import { User } from 'prisma/generated/prisma/client';
+import { ForgetPasswordDto } from './dto/forgetPasswordDto';
+import { ResetPasswordDto } from './dto/resetPasswordDto';
 
 
 const setResponseCookies = (res: Response, tokens: { accessToken: string; refreshToken: string }) => {
       const isProduction = env.NODE_ENV === 'production';
 
       res.cookie('accessToken', tokens.accessToken, {
-          httpOnly: true,                       
-          secure: isProduction,        
+          httpOnly: true,                             
+          secure: isProduction,       
           sameSite: isProduction ? 'none' : 'lax',
-          maxAge: 15 * 60 * 1000,         
+          maxAge: 15 * 60 * 1000,        
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
@@ -129,5 +131,21 @@ export class AuthController {
                 success: true,
                 message: 'Logged out successfully.',
             });
+       }
+
+
+       @ApiOperation({ summary: 'Request a password reset link' })
+       @ApiResponse({ status: 200, description: 'Returns a generic success message to prevent user enumeration.' })
+       @Post('forget-password')
+       async forgetPasswordHandler(@Body() userDetail: ForgetPasswordDto) {
+           return await this.authService.forgetPassword(userDetail);
+       }
+
+       @ApiOperation({ summary: 'Reset account password using a valid raw token' })
+       @ApiResponse({ status: 200, description: 'Password successfully reset and tokens invalidated.' })
+       @ApiResponse({ status: 400, description: 'Invalid or expired token.' })
+       @Post('reset-password')
+       async resetPasswordHandler(@Body() resetDetails: ResetPasswordDto) {
+           return await this.authService.resetPassword(resetDetails);
        }
 }
