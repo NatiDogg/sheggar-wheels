@@ -6,6 +6,7 @@ import { JwtService, TokenPayload } from 'src/utils/jwtService';
 import { RegisterDto } from './dto/registerDto';
 import { UserEventsService } from 'src/events/userEventsService';
 import { LoginDto } from './dto/loginDto';
+import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 
 @Injectable()
 export class AuthService {
@@ -126,9 +127,28 @@ export class AuthService {
     };
   }
 
-  async forgetPassword(){
+  async forgetPassword(userDetail:ForgetPasswordDto){
+      const normalizedEmail = userDetail.email.toLowerCase()
 
-    
+      const user = await this.userService.findUserByEmail(normalizedEmail)
+
+      const genericSuccess = {
+         success: true,
+         message: "If an account with this email exists, we will send you a reset link",
+      }
+
+      if(!user){
+         return genericSuccess
+      }
+
+      if(user && user.provider === 'GOOGLE'){
+        throw new BadRequestException('This account uses Google Sign-In');
+      }
+
+      
+
+
+
   }
 
   async resetPassword(){
