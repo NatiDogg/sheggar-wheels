@@ -109,4 +109,25 @@ export class AuthController {
        async getProfile(@CurrentUser() user: Omit<User, 'password'>){
           return {user: user}
        }
+
+
+       @ApiOperation({ summary: 'Log out user and clear session cookies' })
+       @ApiResponse({ status: 200, description: 'Logged out successfully.' })
+       @Post('logout')
+       async logoutHandler(@Req() Req:Request, @Res() res:Response){
+          const isProduction = env.NODE_ENV === 'production';
+            const cookieOptions = {
+                httpOnly: true,
+                secure: isProduction,
+                sameSite: isProduction ? ('none' as const) : ('lax' as const),
+            };
+
+            res.clearCookie('accessToken', cookieOptions);
+            res.clearCookie('refreshToken', cookieOptions);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Logged out successfully.',
+            });
+       }
 }
