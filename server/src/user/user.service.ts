@@ -75,5 +75,16 @@ export class UserService {
               }
          }
 
+         async getUserByResetToken(token: string){
+
+             return await this.prisma.user.findFirst({
+                 where: {
+                    resetPasswordToken: token,
+                    resetPasswordExpire: {gte: new Date()}
+                 }
+             })
+             
+         }
+
          
 }
