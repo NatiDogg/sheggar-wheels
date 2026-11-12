@@ -1,17 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { User } from "prisma/generated/prisma/client";
+import { UserRegisteredEvent , UserForgetPasswordEvent} from "./interfaces/userInterfaces";
 
 
-export interface UserRegisteredEvent{
-      user: {
-          id: string,
-          email: string,
-          
-      };
-      verifyToken: string;
-      registeredAt: Date;
-}
+
 @Injectable()
 
 export class UserEventsService{
@@ -30,7 +23,11 @@ export class UserEventsService{
           }
 
           this.eventEmitter.emit('user.registered', userRegisteredEventData)
-         
+      
+     }
+
+     emitUserForgetPassword(userDetails:UserForgetPasswordEvent ){
+         this.eventEmitter.emit('user.forgetPassword', userDetails)
      }
 
 }

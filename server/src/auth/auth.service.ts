@@ -155,8 +155,12 @@ export class AuthService {
 
       const appUrl = env.FRONTEND_URL || 'http://localhost:3000'
       const resetUrl = `${appUrl}/reset-password?token=${rawToken}`
+
+      this.userEventService.emitUserForgetPassword({email: user.email, name: user.name, resetUrl})
      
 
+
+      return genericSuccess
 
 
 
