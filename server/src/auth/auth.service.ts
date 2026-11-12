@@ -9,6 +9,7 @@ import { LoginDto } from './dto/loginDto';
 import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 import crypto from 'crypto'
 import { env } from 'src/utils/zodEnvValidator';
+import { ResetPasswordDto } from './dto/resetPasswordDto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -167,8 +168,31 @@ export class AuthService {
 
   }
 
-  async resetPassword(){
+  async resetPassword(resetDetails:ResetPasswordDto){
 
+    const hashedToken = crypto.createHash('sha256').update(resetDetails.token).digest('hex')
+
+    let user = await this.userService.getUserByResetToken(hashedToken)
+
+    if(!user){
+      throw new BadRequestException('Invalid or Expired Token');
+    }
+    const newPassword = await this.bcryptService.hashPassword(resetDetails.password)
+
+    user = await this.userService.updateUser({id: user.id},{password: newPassword, resetPasswordToken: null, resetPasswordExpire: null})
+
+    return {
+       success: true,
+       message: "Password reset Successfully!"
+    }
+
+    
+
+
+
+
+    
+      
   }
 
   private generateUserTokenResponse(
