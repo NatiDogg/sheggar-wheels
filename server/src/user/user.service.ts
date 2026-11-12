@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Provider } from 'prisma/generated/prisma/client';
+import { Prisma, Provider, User } from 'prisma/generated/prisma/client';
+import { UserUpdateInput, UserWhereUniqueInput } from 'prisma/generated/prisma/models';
 
 
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -55,6 +56,23 @@ export class UserService {
                 throw error
                 
              }
+         }
+
+         async updateUser(where: UserWhereUniqueInput, data: UserUpdateInput){
+              try {
+                 const updatedUser = await this.prisma.user.update({
+                     where,
+                     data
+                 })
+
+                 return updatedUser
+              } catch (error) {
+                  if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'){
+                    throw new BadRequestException('Email is already verified or user does not exist.')
+                }
+
+                throw error
+              }
          }
 
          

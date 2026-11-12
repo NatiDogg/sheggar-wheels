@@ -7,7 +7,8 @@ import { RegisterDto } from './dto/registerDto';
 import { UserEventsService } from 'src/events/userEventsService';
 import { LoginDto } from './dto/loginDto';
 import { ForgetPasswordDto } from './dto/forgetPasswordDto';
-
+import crypto from 'crypto'
+import { env } from 'src/utils/zodEnvValidator';
 @Injectable()
 export class AuthService {
   constructor(
@@ -130,11 +131,11 @@ export class AuthService {
   async forgetPassword(userDetail:ForgetPasswordDto){
       const normalizedEmail = userDetail.email.toLowerCase()
 
-      const user = await this.userService.findUserByEmail(normalizedEmail)
+      let user = await this.userService.findUserByEmail(normalizedEmail)
 
       const genericSuccess = {
          success: true,
-         message: "If an account with this email exists, we will send you a reset link",
+         message: "If an account exists for this email, we've sent a password reset link",
       }
 
       if(!user){
@@ -142,10 +143,21 @@ export class AuthService {
       }
 
       if(user && user.provider === 'GOOGLE'){
-        throw new BadRequestException('This account uses Google Sign-In');
+          return genericSuccess
       }
 
-      
+      const rawToken = crypto.randomBytes(32).toString('hex')
+      const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex')
+      const resetPasswordToken = hashedToken;
+      const resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000) //15m
+
+      user = await this.userService.updateUser({email: user.email}, {resetPasswordToken, resetPasswordExpire})
+
+      const appUrl = env.FRONTEND_URL || 'http://localhost:3000'
+      const resetUrl = `${appUrl}/reset-password?token=${rawToken}`
+     
+
+
 
 
 
