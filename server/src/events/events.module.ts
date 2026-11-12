@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserEventsService } from './userEventsService';
-import { UserRegisteredListener } from './listeners/userRegisteredListener';
+import { UserEventsListener } from './listeners/userEventsListener';
 @Module({
    imports: [
       EventEmitterModule.forRoot({
@@ -11,7 +11,7 @@ import { UserRegisteredListener } from './listeners/userRegisteredListener';
          verboseMemoryLeak: true
       })
    ],
-   providers: [UserEventsService, UserRegisteredListener],
+   providers: [UserEventsService, UserEventsListener],
    exports: [UserEventsService]
 
 })

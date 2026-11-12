@@ -7,6 +7,8 @@ model User{
     profileImg String? 
     provider  Provider @default(LOCAL)
     emailVerified Boolean @default(false)
+    resetPasswordToken String? 
+    resetPasswordExpire DateTime?
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     cars     Car[]
