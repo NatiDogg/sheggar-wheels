@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Get, Post, Body, Req, Query, Res } from '@nestjs/common';
+import { Controller, UseGuards, Get, Post, Body, Req, Query, Res, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
@@ -12,7 +12,7 @@ import { CurrentUser } from './decorators/currentUserDecorator';
 import { User } from 'prisma/generated/prisma/client';
 import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 import { ResetPasswordDto } from './dto/resetPasswordDto';
-import { RefreshTokenDto } from './dto/refreshTokenDto';
+
 
 
 const setResponseCookies = (res: Response, tokens: { accessToken: string; refreshToken: string }) => {
@@ -151,7 +151,30 @@ export class AuthController {
        }
 
        @Post('refresh-token')
-       async refreshTokenHandler( @Req() req:Request){
-         
-       }
+       async refreshTokenHandler(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+          const token = req.cookies['refreshToken'];
+
+         if (!token) {
+           throw new UnauthorizedException('Refresh token not found in cookies');
+         }
+
+        try {
+        const { accessToken, refreshToken, ...result } = await this.authService.refreshToken(token);
+        setResponseCookies(res, { accessToken, refreshToken });
+        return result;
+       } catch (error) {
+    
+          const isProduction = env.NODE_ENV === 'production';
+          const cookieOptions = {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? ('none' as const) : ('lax' as const),
+          };
+
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
+
+        throw new UnauthorizedException('Session expired. Please log in again.');
+    }
+}
 }

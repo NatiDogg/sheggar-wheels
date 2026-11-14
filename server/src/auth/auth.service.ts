@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Provider, User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
@@ -10,7 +10,7 @@ import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 import crypto from 'crypto'
 import { env } from 'src/utils/zodEnvValidator';
 import { ResetPasswordDto } from './dto/resetPasswordDto';
-import { RefreshTokenDto } from './dto/refreshTokenDto';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -196,8 +196,23 @@ export class AuthService {
       
   }
 
-  async refreshToken(dto:RefreshTokenDto){
-      
+  async refreshToken(refreshToken:string){
+      const {email} = this.jwtService.verifyRefreshtoken(refreshToken)
+
+      if(!email){
+        throw new UnauthorizedException('Token Verification Failed!')
+      }
+      const user = await this.userService.findUserByEmail(email)
+
+      if(!user){
+          throw new NotFoundException('User not found')
+      }
+
+      const {password, ...safeUser} = user
+
+      return this.generateUserTokenResponse(safeUser, 'Refresh Token Issued Successfully!')
+
+
   }
 
   private generateUserTokenResponse(
