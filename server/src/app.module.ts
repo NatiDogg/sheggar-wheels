@@ -10,6 +10,7 @@ import {ThrottlerGuard, ThrottlerModule} from '@nestjs/throttler'
 import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
 import { EventsModule } from './events/events.module';
+import { CarsModule } from './cars/cars.module';
 @Module({
   imports: [
 
@@ -20,7 +21,7 @@ import { EventsModule } from './events/events.module';
     ThrottlerModule.forRoot({
       throttlers: [{ttl: 60000, limit: 50}]
     }),
-    PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule],
+    PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule, CarsModule],
   controllers: [AppController],
   providers: [AppService, {
      provide: APP_GUARD,
