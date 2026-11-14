@@ -10,6 +10,7 @@ import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 import crypto from 'crypto'
 import { env } from 'src/utils/zodEnvValidator';
 import { ResetPasswordDto } from './dto/resetPasswordDto';
+import { RefreshTokenDto } from './dto/refreshTokenDto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -192,6 +193,10 @@ export class AuthService {
 
 
     
+      
+  }
+
+  async refreshToken(dto:RefreshTokenDto){
       
   }
 

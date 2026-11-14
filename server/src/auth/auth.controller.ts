@@ -12,6 +12,7 @@ import { CurrentUser } from './decorators/currentUserDecorator';
 import { User } from 'prisma/generated/prisma/client';
 import { ForgetPasswordDto } from './dto/forgetPasswordDto';
 import { ResetPasswordDto } from './dto/resetPasswordDto';
+import { RefreshTokenDto } from './dto/refreshTokenDto';
 
 
 const setResponseCookies = (res: Response, tokens: { accessToken: string; refreshToken: string }) => {
@@ -150,7 +151,7 @@ export class AuthController {
        }
 
        @Post('refresh-token')
-       async refreshTokenHandler(@Body('refreshToken') refreshToken:string){
+       async refreshTokenHandler( @Req() req:Request){
          
        }
 }
