@@ -148,4 +148,9 @@ export class AuthController {
        async resetPasswordHandler(@Body() resetDetails: ResetPasswordDto) {
            return await this.authService.resetPassword(resetDetails);
        }
+
+       @Post('refresh-token')
+       async refreshTokenHandler(@Body('refreshToken') refreshToken:string){
+         
+       }
 }
