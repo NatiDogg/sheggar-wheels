@@ -12,7 +12,10 @@ export const envSchema = z.object({
      callbackURL: z.string().min(5),
      FRONTEND_URL: z.string().min(5),
      NODE_ENV: z.string().min(5),
-     JWT_EMAIL_VERIFICATION_SECRET_KEY: z.string().min(5)
+     JWT_EMAIL_VERIFICATION_SECRET_KEY: z.string().min(5),
+     CLOUD_NAME: z.string().min(6),
+     CLOUD_API_KEY: z.string().min(10),
+     CLOUD_API_SECRET: z.string().min(10)
 
 })
 
