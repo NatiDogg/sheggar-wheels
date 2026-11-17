@@ -47,6 +47,7 @@ export class UserService {
                 return await this.prisma.user.update({
                   where: { id, emailVerified: false },
                  data: { emailVerified: isVerifed },
+                 omit: {resetPasswordExpire: true, resetPasswordToken: true, password: true}
              });
              } catch (error) {
                 if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'){

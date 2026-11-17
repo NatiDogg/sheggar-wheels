@@ -20,7 +20,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy){
          const {name, emails, photos} = profile
 
          if(!emails || !emails[0] || !emails[0].verified){
-           throw new UnauthorizedException('Google account email is not verified.');
+           throw new UnauthorizedException('Google account email is missing or not verified.');
          }
 
          const user = {
@@ -30,7 +30,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy){
              profileImg: photos[0].value
          }
 
-         done(null,user)
+         return user
 
 
       }

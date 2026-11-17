@@ -17,7 +17,7 @@ export class JwtService{
         return jwt.sign(userPayload, env.JWT_ACCESS_TOKEN_SECRET_KEY, {expiresIn:'15m'})
     }
     createRefreshToken(userPayload:TokenPayload): string{
-          return jwt.sign(userPayload, env.JWT_REFRESH_TOKEN_SECRET_KEY, {expiresIn:'15m'})
+          return jwt.sign(userPayload, env.JWT_REFRESH_TOKEN_SECRET_KEY, {expiresIn:'7d'})
     }
     verifyAccessToken(token: string){
         return jwt.verify(token, env.JWT_ACCESS_TOKEN_SECRET_KEY) as TokenPayload

@@ -81,7 +81,7 @@ export class AuthService {
           throw new UnauthorizedException('Invalid Credentials!')
       }
 
-      const {password, ...safeUser} = user
+      const {password, resetPasswordExpire,resetPasswordToken,...safeUser} = user
 
       return this.generateUserTokenResponse(safeUser, 'User LoggedIn Successfully' )
 
@@ -216,7 +216,7 @@ export class AuthService {
   }
 
   private generateUserTokenResponse(
-    user: Omit<User, 'password'>,
+    user: Omit<User, 'password' | 'resetPasswordToken' | 'resetPasswordExpire'>,
     message: string,
   ) {
     const payload: TokenPayload = {
