@@ -12,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy){
 
              super({
                 ignoreExpiration: false,
-                jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+                jwtFromRequest: ExtractJwt.fromExtractors([ (request) => request?.cookies?.accessToken ?? null]),
                 secretOrKey: configService.getOrThrow<string>('JWT_ACCESS_TOKEN_SECRET_KEY')
              })
         }
@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy){
 
 
     async validate(payload: TokenPayload ) {
-         const user = await this.prisma.user.findUnique({where: {id: payload.id}, omit: {password: true}})
+         const user = await this.prisma.user.findUnique({where: {id: payload.id}, omit: {password: true, resetPasswordExpire: true, resetPasswordToken: true}})
 
          if(!user){
             throw new UnauthorizedException("User Not Found!")

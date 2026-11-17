@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Get, Post, Body, Req, Query, Res, UnauthorizedException } from '@nestjs/common';
+import { Controller, UseGuards, Get, Post, Body, Req, Query, Res, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/googleAuthGuard';
 import { RegisterDto } from './dto/registerDto';
@@ -43,6 +43,7 @@ export class AuthController {
        @ApiResponse({ status: 201, description: 'User successfully registered and verification event emitted.' })
        @ApiResponse({ status: 409, description: 'Email already in use.' })
        @Throttle({ default: { limit: 5, ttl: 60000 } })
+       @HttpCode(HttpStatus.CREATED)
        @Post('register')
        async signUpHandler(@Body() registrationDetails: RegisterDto) {
           return await this.authService.signUp(registrationDetails);
@@ -52,6 +53,7 @@ export class AuthController {
        @ApiResponse({ status: 200, description: 'Login successful, returns user payload and JWT tokens.' })
        @ApiResponse({ status: 401, description: 'Invalid credentials or account uses Google Sign-In.' })
        @Throttle({ default: { limit: 4, ttl: 60000 } })
+        @HttpCode(HttpStatus.OK)
        @Post('login')
        async loginHandler(@Body() loginDetails: LoginDto, @Res({passthrough: true}) res:Response) {
 
@@ -116,6 +118,7 @@ export class AuthController {
 
        @ApiOperation({ summary: 'Log out user and clear session cookies' })
        @ApiResponse({ status: 200, description: 'Logged out successfully.' })
+         @HttpCode(HttpStatus.OK)
        @Post('logout')
        async logoutHandler(@Req() Req:Request, @Res() res:Response){
           const isProduction = env.NODE_ENV === 'production';
@@ -137,6 +140,7 @@ export class AuthController {
 
        @ApiOperation({ summary: 'Request a password reset link' })
        @ApiResponse({ status: 200, description: 'Returns a generic success message to prevent user enumeration.' })
+        @Throttle({ default: { limit: 4, ttl: 60000 } })
        @Post('forget-password')
        async forgetPasswordHandler(@Body() userDetail: ForgetPasswordDto) {
            return await this.authService.forgetPassword(userDetail);
@@ -145,6 +149,7 @@ export class AuthController {
        @ApiOperation({ summary: 'Reset account password using a valid raw token' })
        @ApiResponse({ status: 200, description: 'Password successfully reset and tokens invalidated.' })
        @ApiResponse({ status: 400, description: 'Invalid or expired token.' })
+         @Throttle({ default: { limit: 4, ttl: 60000 } })
        @Post('reset-password')
        async resetPasswordHandler(@Body() resetDetails: ResetPasswordDto) {
            return await this.authService.resetPassword(resetDetails);
@@ -153,6 +158,8 @@ export class AuthController {
        @ApiOperation({ summary: 'Refresh access and refresh tokens using a valid cookie session' })
        @ApiResponse({ status: 200, description: 'Tokens successfully   refreshed, new cookies set, and user payload returned.' })
        @ApiResponse({ status: 401, description: 'Refresh token missing, invalid, or expired. Cookies cleared and session terminated.' })
+       @Throttle({ default: { limit: 5, ttl: 60000 } })
+       @HttpCode(HttpStatus.OK)
        @Post('refresh-token')
        async refreshTokenHandler(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
           const token = req.cookies['refreshToken'];
