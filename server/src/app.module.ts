@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { UserModule } from './user/user.module';
 import { EventsModule } from './events/events.module';
 import { CarsModule } from './cars/cars.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
 @Module({
   imports: [
 
@@ -21,7 +22,7 @@ import { CarsModule } from './cars/cars.module';
     ThrottlerModule.forRoot({
       throttlers: [{ttl: 60000, limit: 50}]
     }),
-    PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule, CarsModule],
+    PrismaModule, AuthModule, AuthCommonModule, UserModule, EventsModule, CarsModule, FileUploadModule],
   controllers: [AppController],
   providers: [AppService, {
      provide: APP_GUARD,
