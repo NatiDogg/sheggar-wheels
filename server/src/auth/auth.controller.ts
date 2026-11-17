@@ -158,8 +158,8 @@ export class AuthController {
        @ApiOperation({ summary: 'Refresh access and refresh tokens using a valid cookie session' })
        @ApiResponse({ status: 200, description: 'Tokens successfully   refreshed, new cookies set, and user payload returned.' })
        @ApiResponse({ status: 401, description: 'Refresh token missing, invalid, or expired. Cookies cleared and session terminated.' })
-         @Throttle({ default: { limit: 5, ttl: 60000 } })
-           @HttpCode(HttpStatus.OK)
+       @Throttle({ default: { limit: 5, ttl: 60000 } })
+       @HttpCode(HttpStatus.OK)
        @Post('refresh-token')
        async refreshTokenHandler(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
           const token = req.cookies['refreshToken'];

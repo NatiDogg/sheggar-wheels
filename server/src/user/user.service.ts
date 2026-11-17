@@ -42,16 +42,16 @@ export class UserService {
              return await this.prisma.user.findUnique({where: {email}})
          }
 
-         async updateEmailVerifiedStatus(id: string, isVerifed: boolean){
+         async updateEmailVerifiedStatus(id: string,email:string, isVerifed: boolean){
              try {
                 return await this.prisma.user.update({
-                  where: { id, emailVerified: false },
+                  where: { id,email, emailVerified: false },
                  data: { emailVerified: isVerifed },
                  omit: {resetPasswordExpire: true, resetPasswordToken: true, password: true}
              });
              } catch (error) {
                 if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'){
-                    throw new BadRequestException('Email is already verified or user does not exist.')
+                    throw new BadRequestException(  'Email is already verified, email has changed, or user does not exist.')
                 }
 
                 throw error

@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException, 
 import { Provider, User } from 'prisma/generated/prisma/client';
 import { UserService } from 'src/user/user.service';
 import { BcryptService } from 'src/utils/bcryptService';
-import { JwtService, TokenPayload } from 'src/utils/jwtService';
+import { EmailVerificationPayload, JwtService, TokenPayload } from 'src/utils/jwtService';
 import { RegisterDto } from './dto/registerDto';
 import { UserEventsService } from 'src/events/userEventsService';
 import { LoginDto } from './dto/loginDto';
@@ -41,11 +41,10 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const verifyToken = this.jwtService.createAccessToken({
-      id: newlyCreatedUser.id,
-      name: newlyCreatedUser.name,
-      email: newlyCreatedUser.email,
-      role: newlyCreatedUser.role,
+    const verifyToken = this.jwtService.createEmailVerificationToken({
+       id: newlyCreatedUser.id,
+        email: newlyCreatedUser.email,
+       purpose: 'email-verification',
     });
 
     // emitting user registration event to send email to verify email
@@ -106,7 +105,7 @@ export class AuthService {
     } 
     else {
       if (!user.emailVerified && googleUser.isemailverified) {
-        user = await this.userService.updateEmailVerifiedStatus(user.id, true);
+        user = await this.userService.updateEmailVerifiedStatus(user.id,user.email, true);
       }
     }
 
@@ -117,13 +116,17 @@ export class AuthService {
 
   async verifyEmail(token: string){
 
-     let payload:TokenPayload;
+     let payload:EmailVerificationPayload;
      try {
-     payload = this.jwtService.verifyAccessToken(token);
+
+     payload = this.jwtService.verifyEmailVerificationToken(token);
+
      } catch (error) {
       throw new BadRequestException('Invalid or expired verification token.');
      }
-      await this.userService.updateEmailVerifiedStatus(payload.id, true)
+      await this.userService.updateEmailVerifiedStatus( payload.id,
+    payload.email,
+    true)
      return {
       success: true,
       message: 'Email verified successfully! You can now log in.',
