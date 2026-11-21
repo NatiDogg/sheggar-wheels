@@ -8,7 +8,7 @@ export class CarsService {
        
         constructor(private prisma:PrismaService){}
 
-        async registerCar(carDetails: CreateCarDto, carImg:Buffer, ownerId: string){
+        async registerCar(carDetails: CreateCarDto, carImg:Express.Multer.File, ownerId: string){
 
         }
 

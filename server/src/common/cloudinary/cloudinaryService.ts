@@ -4,7 +4,7 @@ import {Multer} from "multer"
 import * as streamifier from 'streamifier'
 
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8 MB in bytes
 const ALLOWED_MIMETYPES = new Set([
   'image/jpeg',
   'image/png',
