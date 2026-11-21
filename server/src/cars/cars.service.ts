@@ -4,6 +4,8 @@ import { CreateCarDto } from './dto/createCarDto';
 import { CloudinaryService } from 'src/common/cloudinary/cloudinaryService';
 import { UploadApiResponse } from 'cloudinary';
 import { CarEventsService } from 'src/events/carEventsService';
+import { UpdateCarDto } from './dto/updateCarDto';
+import { QueryCarDto } from './dto/queryCarDto';
 
 @Injectable()
 export class CarsService {
@@ -56,7 +58,7 @@ export class CarsService {
 
         }
 
-        async getCars(){
+        async getCars(query:QueryCarDto){
 
         }
 
@@ -76,11 +78,15 @@ export class CarsService {
             }
         }
 
-        async updateCar(){
+        async updateCar(updateCarDetails:UpdateCarDto, ownerId: string){
 
         }
 
-        async deleteCar(){
+        async deleteCar(carId:string, ownerId:string){
             
+        }
+
+        async updateCarStatus(){
+           
         }
 }
