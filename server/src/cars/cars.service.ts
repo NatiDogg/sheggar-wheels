@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateCarDto } from './dto/createCarDto';
 
 @Injectable()
 export class CarsService {
@@ -7,7 +8,7 @@ export class CarsService {
        
         constructor(private prisma:PrismaService){}
 
-        async createCar(){
+        async registerCar(carDetails: CreateCarDto, carImg:Buffer, ownerId: string){
 
         }
 
