@@ -28,8 +28,8 @@ export class CarsController {
                       new FileTypeValidator({ fileType: ALLOWED_IMAGE_MIME_REGEX }),
                ],
                fileIsRequired: true
-       })) image: Express.Multer.File, @CurrentUser() user:Omit<User,'password'>){   
+       })) imagefile: Express.Multer.File, @CurrentUser() user:Omit<User,'password'>){   
               
-         return await this.carsService.registerCar(carDetails, image, user.id)
+         return await this.carsService.registerCar(carDetails, imagefile, user.id)
        }
 }
