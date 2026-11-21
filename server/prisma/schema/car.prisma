@@ -7,6 +7,7 @@ model Car {
   description     String
   price           Decimal      @db.Decimal(10, 2)
   carImg          String
+  carImgPublicId  String
   status          CarStatus    @default(PENDING)
 
   owner           User         @relation(fields: [ownerId], references: [id])
