@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException,Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException,Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCarDto } from './dto/createCarDto';
 import { CloudinaryService } from 'src/common/cloudinary/cloudinaryService';
@@ -60,8 +60,20 @@ export class CarsService {
 
         }
 
-        async getCar(){
 
+        // TODO: filter by status / role permissions
+        async getCar(id:string){
+            const car = await this.prisma.car.findUnique({where:{id}})
+
+            if(!car){
+               throw new NotFoundException('Car not Found!')
+            }
+
+            return {
+                success: true,
+                message: "Car retrieved Successfully",
+                car: car
+            }
         }
 
         async updateCar(){
