@@ -12,7 +12,7 @@ import { UploadApiResponse } from 'cloudinary';
 import { CarEventsService } from 'src/events/carEventsService';
 import { UpdateCarDto } from './dto/updateCarDto';
 import { QueryCarDto } from './dto/queryCarDto';
-import { Car, Prisma } from 'prisma/generated/prisma/client';
+import { Car, CarStatus, Prisma } from 'prisma/generated/prisma/client';
 import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 import { PaginationResponse } from 'src/common/pagination/interface/paginationResponseInterface';
 
@@ -80,7 +80,7 @@ export class CarsService {
   async getCars(
     query: QueryCarDto,
     pagination: PaginationQueryDto,
-  ): Promise<PaginationResponse<Car[]>> {
+  ): Promise<PaginationResponse<Car>> {
     const { search, minPrice, maxPrice, minYear, maxYear, minSeatingCapacity } =
       query;
     const { limit = 10, page = 1 } = pagination;
@@ -114,7 +114,7 @@ export class CarsService {
 
     const whereCondition: Prisma.CarWhereInput = {
       ...queryCondition,
-      status: 'APPROVED',
+      status: CarStatus.APPROVED,
     };
 
     const [cars, totalItems] = await Promise.all([
