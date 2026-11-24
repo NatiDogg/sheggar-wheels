@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-  UnauthorizedException,
+ 
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCarDto } from './dto/createCarDto';
@@ -15,7 +15,7 @@ import { UploadApiResponse } from 'cloudinary';
 import { CarEventsService } from 'src/events/carEventsService';
 import { UpdateCarDto } from './dto/updateCarDto';
 import { QueryCarDto } from './dto/queryCarDto';
-import { Car, CarStatus, Prisma, Role } from 'prisma/generated/prisma/client';
+import { BookingStatus, Car, CarStatus, Prisma, Role } from 'prisma/generated/prisma/client';
 
 import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 import { PaginationResponse } from 'src/common/pagination/interface/paginationResponseInterface';
@@ -221,105 +221,116 @@ export class CarsService {
     };
   }
 
-  async updateCar(
-    updateCarDetails: UpdateCarDto,
-    ownerId: string,
-    carId: string,
-    carImgFile?: Express.Multer.File,
-  ) {
-
-     const hasDetails = Object.keys(updateCarDetails).length > 0;
-      if (!hasDetails && !carImgFile) {
-    throw new BadRequestException( 'Provide at least one field or a new car image to update' );
+ async updateCar(
+  updateCarDetails: UpdateCarDto,
+  ownerId: string,
+  carId: string,
+  carImgFile?: Express.Multer.File,
+) {
+  const hasDetails = Object.keys(updateCarDetails).length > 0;
+  if (!hasDetails && !carImgFile) {
+    throw new BadRequestException(
+      'Provide at least one field or a new car image to update',
+    );
   }
-    const car = await this.prisma.car.findUnique({ where: { id: carId } });
 
-    if (!car) {
-      throw new NotFoundException('Car Not Found!');
+  const activeStatuses: BookingStatus[] = ['PENDING', 'APPROVED'];
+
+
+  const car = await this.prisma.car.findUnique({
+    where: { id: carId },
+    select: {
+      ownerId: true,
+      carImgPublicId: true,
+      bookings: {
+        where: { status: { in: activeStatuses } },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+  if (!car) {
+    throw new NotFoundException('Car Not Found!');
+  }
+
+  if (car.ownerId !== ownerId) {
+    throw new ForbiddenException(
+      'You are not authorized to update someone else’s car',
+    );
+  }
+
+  if (car.bookings.length > 0) {
+    throw new BadRequestException('Cannot update car with active bookings');
+  }
+
+  const oldCarCloudinaryPublicId = car.carImgPublicId;
+  let uploadedImage: UploadApiResponse | undefined;
+  let updatedCar: Car;
+
+  try {
+    
+    if (carImgFile) {
+      uploadedImage = await this.cloudinaryService.uploadImage(carImgFile);
     }
 
-    if (car.ownerId !== ownerId) {
-      throw new ForbiddenException(
-        'You are not authorized to update someone else’s car',
+    
+    updatedCar = await this.prisma.car.update({
+      where: {
+        id: carId,
+        ownerId,
+        bookings: { none: { status: { in: activeStatuses } } },
+      },
+      data: {
+        ...updateCarDetails,
+        ...(uploadedImage && {
+          carImg: uploadedImage.secure_url,
+          carImgPublicId: uploadedImage.public_id,
+        }),
+        status: CarStatus.PENDING,
+      },
+    });
+  } catch (error) {
+
+    if (uploadedImage?.public_id) {
+      try {
+        await this.cloudinaryService.deleteImage(uploadedImage.public_id);
+      } catch (cleanupError) {
+        this.logger.warn(
+          `Failed to delete uploaded Cloudinary image (${uploadedImage.public_id}): ${cleanupError}`,
+        );
+      }
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      throw new ConflictException(
+        'Car could not be updated. It may have changed or received a booking.',
       );
     }
 
-    const hasActiveBookings = await this.prisma.booking.findFirst({
-      where: {
-        carId,
-        status: { in: ['PENDING', 'APPROVED'] },
-      },
-    });
+    throw error;
+  }
 
-    if (hasActiveBookings) {
-      throw new BadRequestException('Cannot update car with active bookings');
-    }
 
-    const oldCarCloudinaryPublicId = car.carImgPublicId;
-    let uploadedImage: UploadApiResponse | undefined;
-
+  if (uploadedImage && oldCarCloudinaryPublicId) {
     try {
-      if (carImgFile) {
-        uploadedImage = await this.cloudinaryService.uploadImage(carImgFile);
-      }
-
-      const updatedCar = await this.prisma.$transaction(async (tx) => {
-    
-        const bookingConflict = await tx.booking.findFirst({
-          where: {
-            carId,
-            status: { in: ['PENDING', 'APPROVED'] },
-          },
-        });
-
-        if (bookingConflict) {
-          throw new BadRequestException(
-            'Cannot update car with active bookings',
-          );
-        }
-
-        return tx.car.update({
-          where: { id: carId },
-          data: {
-            ...updateCarDetails,
-            ...(uploadedImage && {
-              carImg: uploadedImage.secure_url,
-              carImgPublicId: uploadedImage.public_id,
-            }),
-            status: CarStatus.PENDING,
-          },
-        });
-      });
-
-      if (uploadedImage && oldCarCloudinaryPublicId) {
-        try {
-          await this.cloudinaryService.deleteImage(oldCarCloudinaryPublicId);
-        } catch (cleanupError) {
-          this.logger.warn(
-            `Failed to delete old Cloudinary image (${oldCarCloudinaryPublicId}): ${cleanupError}`,
-          );
-        }
-      }
-
-      return {
-        success: true,
-        message: 'Car Updated Successfully',
-        data: updatedCar,
-      };
-    } catch (error) {
-      if (uploadedImage?.public_id) {
-        try {
-          await this.cloudinaryService.deleteImage(uploadedImage.public_id);
-        } catch (cleanupError) {
-          this.logger.warn(
-            `Failed to delete uploaded Cloudinary image (${uploadedImage.public_id}): ${cleanupError}`,
-          );
-        }
-      }
-
-      throw error;
+      await this.cloudinaryService.deleteImage(oldCarCloudinaryPublicId);
+    } catch (cleanupError) {
+      this.logger.warn(
+        `Failed to delete old Cloudinary image (${oldCarCloudinaryPublicId}): ${cleanupError}`,
+      );
     }
   }
+
+  return {
+    success: true,
+    message: 'Car Updated Successfully',
+    data: updatedCar,
+  };
+}
 
   async deleteCar(carId: string, ownerId: string) {}
 
