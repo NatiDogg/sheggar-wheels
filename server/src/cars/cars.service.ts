@@ -1,11 +1,12 @@
 import {
-   BadRequestException,
-   ConflictException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
-
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCarDto } from './dto/createCarDto';
@@ -18,7 +19,6 @@ import { Car, CarStatus, Prisma, Role } from 'prisma/generated/prisma/client';
 
 import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 import { PaginationResponse } from 'src/common/pagination/interface/paginationResponseInterface';
-
 
 const carSelect = {
   id: true,
@@ -148,26 +148,23 @@ export class CarsService {
       this.prisma.car.findMany({
         where: whereCondition,
 
-        select:{
-           id: true,
-           make: true,
-           description: true,
-           year: true,
-           price: true,
-           carImg: true,
-           createdAt: true,
-           owner: {select: {name: true, email: true,profileImg: true,}},
-           seatingCapacity: true,
-           model: true,
-           updatedAt: true,
-           status: true,
-
-
+        select: {
+          id: true,
+          make: true,
+          description: true,
+          year: true,
+          price: true,
+          carImg: true,
+          createdAt: true,
+          owner: { select: { name: true, email: true, profileImg: true } },
+          seatingCapacity: true,
+          model: true,
+          updatedAt: true,
+          status: true,
         },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-
       }),
       this.prisma.car.count({
         where: whereCondition,
@@ -192,82 +189,131 @@ export class CarsService {
   }
 
   async getMyCars(ownerId: string) {
+    const cars = await this.prisma.car.findMany({
+      where: { ownerId },
+    });
 
-      const cars = await this.prisma.car.findMany({
-          where: {ownerId}
-      })
-
-      return {
-           success: true,
-           message: "Cars Retrieved Successfully",
-           data: cars
-      }
-     
+    return {
+      success: true,
+      message: 'Cars Retrieved Successfully',
+      data: cars,
+    };
   }
 
-  
   async getCar(carId: string, user: { id: string; role: Role }) {
-  const whereCondition: Prisma.CarWhereUniqueInput =
-    user.role === Role.ADMIN
-      ? { id: carId }
-      : { id: carId, ownerId: user.id };
+    const whereCondition: Prisma.CarWhereUniqueInput =
+      user.role === Role.ADMIN
+        ? { id: carId }
+        : { id: carId, ownerId: user.id };
 
-  const car = await this.prisma.car.findUnique({
-    where: whereCondition,
-  });
+    const car = await this.prisma.car.findUnique({
+      where: whereCondition,
+    });
 
-  if (!car) {
-    throw new NotFoundException('Car not found!');
+    if (!car) {
+      throw new NotFoundException('Car not found!');
+    }
+
+    return {
+      success: true,
+      message: 'Car retrieved successfully',
+      data: car,
+    };
   }
 
-  return {
-    success: true,
-    message: 'Car retrieved successfully',
-    data: car,
-  };
-}
+  async updateCar(
+    updateCarDetails: UpdateCarDto,
+    ownerId: string,
+    carId: string,
+    carImgFile?: Express.Multer.File,
+  ) {
+    const car = await this.prisma.car.findUnique({ where: { id: carId } });
 
-  async updateCar(updateCarDetails: UpdateCarDto, ownerId: string, carId: string, imageFile: Express.Multer.File) {
+    if (!car) {
+      throw new NotFoundException('Car Not Found!');
+    }
 
-      let carCloudinaryPublicId = null;
-     try {
-      
-         const updatedCar = await this.prisma.$transaction(async(tx)=>{
+    if (car.ownerId !== ownerId) {
+      throw new ForbiddenException(
+        'You are not authorized to update someone else’s car',
+      );
+    }
 
-               const hasActiveBookings = await tx.booking.findFirst({where:{
-                    carId: carId,
-                    status: {in: ['PENDING', 'APPROVED']}
-               }})
+    const hasActiveBookings = await this.prisma.booking.findFirst({
+      where: {
+        carId,
+        status: { in: ['PENDING', 'APPROVED'] },
+      },
+    });
 
-               if(hasActiveBookings){
-                  throw new BadRequestException('Cannot update car with active bookings');
-               }
+    if (hasActiveBookings) {
+      throw new BadRequestException('Cannot update car with active bookings');
+    }
 
-               await tx.car.update({
-                   where:{
-                       id: carId,
-                       ownerId: ownerId
-                   },
-                    data:{
-                      ...updateCarDetails,
-                      carImg: '',
-                      carImgPublicId: ""
-                    }
-               })
+    const oldCarCloudinaryPublicId = car.carImgPublicId;
+    let uploadedImage: UploadApiResponse | undefined;
 
+    try {
+      if (carImgFile) {
+        uploadedImage = await this.cloudinaryService.uploadImage(carImgFile);
+      }
 
+      const updatedCar = await this.prisma.$transaction(async (tx) => {
+    
+        const bookingConflict = await tx.booking.findFirst({
+          where: {
+            carId,
+            status: { in: ['PENDING', 'APPROVED'] },
+          },
+        });
 
-
-         })
-     } catch (error) {
-      
-        if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'){
-           throw new NotFoundException("")
+        if (bookingConflict) {
+          throw new BadRequestException(
+            'Cannot update car with active bookings',
+          );
         }
 
-        throw error
-     }
-     
+        return tx.car.update({
+          where: { id: carId },
+          data: {
+            ...updateCarDetails,
+            ...(uploadedImage && {
+              carImg: uploadedImage.secure_url,
+              carImgPublicId: uploadedImage.public_id,
+            }),
+            status: CarStatus.PENDING,
+          },
+        });
+      });
+
+      if (uploadedImage && oldCarCloudinaryPublicId) {
+        try {
+          await this.cloudinaryService.deleteImage(oldCarCloudinaryPublicId);
+        } catch (cleanupError) {
+          this.logger.warn(
+            `Failed to delete old Cloudinary image (${oldCarCloudinaryPublicId}): ${cleanupError}`,
+          );
+        }
+      }
+
+      return {
+        success: true,
+        message: 'Car Updated Successfully',
+        data: updatedCar,
+      };
+    } catch (error) {
+      if (uploadedImage?.public_id) {
+        try {
+          await this.cloudinaryService.deleteImage(uploadedImage.public_id);
+        } catch (cleanupError) {
+          this.logger.warn(
+            `Failed to delete uploaded Cloudinary image (${uploadedImage.public_id}): ${cleanupError}`,
+          );
+        }
+      }
+
+      throw error;
+    }
   }
 
   async deleteCar(carId: string, ownerId: string) {}

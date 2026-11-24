@@ -40,13 +40,13 @@ export class CarsController {
        @UseGuards(JwtAuthGuard,RolesGuard)
        @Patch('update/:id')
        @UseInterceptors(FileInterceptor('carImg'))
-       async updateCar(@Param('id',ParseUUIDPipe) carId: string,@Body() updateDetails:UpdateCarDto, @UploadedFile(new ParseFilePipe({
+       async updateCar(@Param('id',ParseUUIDPipe) carId: string,@Body() updateDetails:UpdateCarDto,@CurrentUser() user: Omit<User, 'password'>, @UploadedFile(new ParseFilePipe({
                validators:[
                       new MaxFileSizeValidator({ maxSize: MAX_IMAGE_SIZE_BYTES }),
                       new FileTypeValidator({ fileType: ALLOWED_IMAGE_MIME_REGEX }),
                ],
                fileIsRequired: true
-       })) imageFile:Express.Multer.File, @CurrentUser() user: Omit<User, 'password'>){
+       })) imageFile?:Express.Multer.File, ){
             return await this.carsService.updateCar(updateDetails, user.id, carId, imageFile)
        }
 }
