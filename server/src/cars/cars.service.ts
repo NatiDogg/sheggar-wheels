@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-  Search,
+
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCarDto } from './dto/createCarDto';
@@ -12,10 +12,34 @@ import { UploadApiResponse } from 'cloudinary';
 import { CarEventsService } from 'src/events/carEventsService';
 import { UpdateCarDto } from './dto/updateCarDto';
 import { QueryCarDto } from './dto/queryCarDto';
-import { Car, CarStatus, Prisma } from 'prisma/generated/prisma/client';
+import { Car, CarStatus, Prisma, Role } from 'prisma/generated/prisma/client';
+
 import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 import { PaginationResponse } from 'src/common/pagination/interface/paginationResponseInterface';
 
+
+const carSelect = {
+  id: true,
+  make: true,
+  model: true,
+  description: true,
+  year: true,
+  price: true,
+  carImg: true,
+  createdAt: true,
+  seatingCapacity: true,
+  owner: {
+    select: {
+      name: true,
+      email: true,
+      profileImg: true,
+    },
+  },
+} satisfies Prisma.CarSelect;
+
+export type CarListItem = Prisma.CarGetPayload<{
+  select: typeof carSelect;
+}>;
 @Injectable()
 export class CarsService {
   private logger = new Logger(CarsService.name);
@@ -61,7 +85,7 @@ export class CarsService {
       return {
         success: true,
         message: 'Car registered. Awaiting admin approval.',
-        car: newlyRegisteredCar,
+        data: newlyRegisteredCar,
       };
     } catch (error) {
       if (!carCreated && uploadedImage?.public_id) {
@@ -77,10 +101,11 @@ export class CarsService {
     }
   }
 
+  //TO-DO: get feedbacks  and let public users see the rating for the car or booking
   async getCars(
     query: QueryCarDto,
     pagination: PaginationQueryDto,
-  ): Promise<PaginationResponse<Car>> {
+  ): Promise<PaginationResponse<CarListItem>> {
     const { search, minPrice, maxPrice, minYear, maxYear, minSeatingCapacity } =
       query;
     const { limit = 10, page = 1 } = pagination;
@@ -120,9 +145,27 @@ export class CarsService {
     const [cars, totalItems] = await Promise.all([
       this.prisma.car.findMany({
         where: whereCondition,
+
+        select:{
+           id: true,
+           make: true,
+           description: true,
+           year: true,
+           price: true,
+           carImg: true,
+           createdAt: true,
+           owner: {select: {name: true, email: true,profileImg: true,}},
+           seatingCapacity: true,
+           model: true,
+           updatedAt: true,
+           status: true,
+
+
+        },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+
       }),
       this.prisma.car.count({
         where: whereCondition,
@@ -146,22 +189,41 @@ export class CarsService {
     };
   }
 
-  async getMyCars() {}
+  async getMyCars(ownerId: string) {
 
-  // TODO: filter by status / role permissions
-  async getCar(id: string) {
-    const car = await this.prisma.car.findUnique({ where: { id } });
+      const cars = await this.prisma.car.findMany({
+          where: {ownerId}
+      })
 
-    if (!car) {
-      throw new NotFoundException('Car not Found!');
-    }
-
-    return {
-      success: true,
-      message: 'Car retrieved Successfully',
-      car: car,
-    };
+      return {
+           success: true,
+           message: "Cars Retrieved Successfully",
+           data: cars
+      }
+     
   }
+
+  
+  async getCar(carId: string, user: { id: string; role: Role }) {
+  const whereCondition: Prisma.CarWhereUniqueInput =
+    user.role === Role.ADMIN
+      ? { id: carId }
+      : { id: carId, ownerId: user.id };
+
+  const car = await this.prisma.car.findUnique({
+    where: whereCondition,
+  });
+
+  if (!car) {
+    throw new NotFoundException('Car not found!');
+  }
+
+  return {
+    success: true,
+    message: 'Car retrieved successfully',
+    data: car,
+  };
+}
 
   async updateCar(updateCarDetails: UpdateCarDto, ownerId: string) {}
 
