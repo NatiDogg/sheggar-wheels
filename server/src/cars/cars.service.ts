@@ -14,7 +14,7 @@ export class CarsService {
        
         constructor(private prisma:PrismaService, private readonly cloudinaryService:CloudinaryService, private readonly carEventsService:CarEventsService){}
 
-        async registerCar(carDetails: CreateCarDto, carImgFile:Express.Multer.File, ownerId: string){
+        async createCar(carDetails: CreateCarDto, carImgFile:Express.Multer.File, ownerId: string){
 
                 let uploadedImage: UploadApiResponse | undefined;
                 let carCreated = false
