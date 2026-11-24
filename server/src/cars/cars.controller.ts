@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/createCarDto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -8,6 +8,7 @@ import { Roles } from 'src/auth/decorators/rolesDecorator';
 import { Role } from 'prisma/generated/prisma/enums';
 import { CurrentUser } from 'src/auth/decorators/currentUserDecorator';
 import { User } from 'prisma/generated/prisma/client';
+import { UpdateCarDto } from './dto/updateCarDto';
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; 
 const ALLOWED_IMAGE_MIME_REGEX = /^image\/(jpeg|jpg|png|webp)$/;
@@ -31,5 +32,21 @@ export class CarsController {
        })) imagefile: Express.Multer.File, @CurrentUser() user:Omit<User,'password'>){   
               
          return await this.carsService.createCar(carDetails, imagefile, user.id)
+       }
+
+
+
+       @Roles(Role.USER)
+       @UseGuards(JwtAuthGuard,RolesGuard)
+       @Patch('update/:id')
+       @UseInterceptors(FileInterceptor('carImg'))
+       async updateCar(@Param('id',ParseUUIDPipe) carId: string,@Body() updateDetails:UpdateCarDto, @UploadedFile(new ParseFilePipe({
+               validators:[
+                      new MaxFileSizeValidator({ maxSize: MAX_IMAGE_SIZE_BYTES }),
+                      new FileTypeValidator({ fileType: ALLOWED_IMAGE_MIME_REGEX }),
+               ],
+               fileIsRequired: true
+       })) imageFile:Express.Multer.File, @CurrentUser() user: Omit<User, 'password'>){
+            return await this.carsService.updateCar(updateDetails, user.id, carId, imageFile)
        }
 }

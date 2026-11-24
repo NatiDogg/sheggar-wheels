@@ -1,4 +1,6 @@
 import {
+   BadRequestException,
+   ConflictException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -225,7 +227,48 @@ export class CarsService {
   };
 }
 
-  async updateCar(updateCarDetails: UpdateCarDto, ownerId: string) {}
+  async updateCar(updateCarDetails: UpdateCarDto, ownerId: string, carId: string, imageFile: Express.Multer.File) {
+
+      let carCloudinaryPublicId = null;
+     try {
+      
+         const updatedCar = await this.prisma.$transaction(async(tx)=>{
+
+               const hasActiveBookings = await tx.booking.findFirst({where:{
+                    carId: carId,
+                    status: {in: ['PENDING', 'APPROVED']}
+               }})
+
+               if(hasActiveBookings){
+                  throw new BadRequestException('Cannot update car with active bookings');
+               }
+
+               await tx.car.update({
+                   where:{
+                       id: carId,
+                       ownerId: ownerId
+                   },
+                    data:{
+                      ...updateCarDetails,
+                      carImg: '',
+                      carImgPublicId: ""
+                    }
+               })
+
+
+
+
+         })
+     } catch (error) {
+      
+        if(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'){
+           throw new NotFoundException("")
+        }
+
+        throw error
+     }
+     
+  }
 
   async deleteCar(carId: string, ownerId: string) {}
 
