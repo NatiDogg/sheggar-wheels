@@ -30,6 +30,6 @@ export class CarsController {
                fileIsRequired: true
        })) imagefile: Express.Multer.File, @CurrentUser() user:Omit<User,'password'>){   
               
-         return await this.carsService.registerCar(carDetails, imagefile, user.id)
+         return await this.carsService.createCar(carDetails, imagefile, user.id)
        }
 }
