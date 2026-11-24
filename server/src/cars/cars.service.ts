@@ -227,6 +227,11 @@ export class CarsService {
     carId: string,
     carImgFile?: Express.Multer.File,
   ) {
+
+     const hasDetails = Object.keys(updateCarDetails).length > 0;
+      if (!hasDetails && !carImgFile) {
+    throw new BadRequestException( 'Provide at least one field or a new car image to update' );
+  }
     const car = await this.prisma.car.findUnique({ where: { id: carId } });
 
     if (!car) {

@@ -45,7 +45,7 @@ export class CarsController {
                       new MaxFileSizeValidator({ maxSize: MAX_IMAGE_SIZE_BYTES }),
                       new FileTypeValidator({ fileType: ALLOWED_IMAGE_MIME_REGEX }),
                ],
-               fileIsRequired: true
+               fileIsRequired: false
        })) imageFile?:Express.Multer.File, ){
             return await this.carsService.updateCar(updateDetails, user.id, carId, imageFile)
        }
