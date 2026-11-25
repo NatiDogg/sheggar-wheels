@@ -325,6 +325,9 @@ export class CarsService {
     }
   }
 
+
+  //emit event for the admin to let know a specific car has been updated here
+
   return {
     success: true,
     message: 'Car Updated Successfully',
@@ -332,7 +335,21 @@ export class CarsService {
   };
 }
 
-  async deleteCar(carId: string, ownerId: string) {}
+  async deleteCar(carId: string, ownerId: string) {
+
+      const activeBookings:BookingStatus[] = ['PENDING','APPROVED','IN_PROGRESS']
+
+    
+     
+      try {
+        
+      } catch (error) {
+        
+      }
+
+
+
+  }
 
   async updateCarStatus() {}
 }
