@@ -142,6 +142,8 @@ export class CarsService {
     const whereCondition: Prisma.CarWhereInput = {
       ...queryCondition,
       status: CarStatus.APPROVED,
+      deletedAt: null
+      
     };
 
     const [cars, totalItems] = await Promise.all([
@@ -190,7 +192,7 @@ export class CarsService {
 
   async getMyCars(ownerId: string) {
     const cars = await this.prisma.car.findMany({
-      where: { ownerId },
+      where: { ownerId, deletedAt: null },
     });
 
     return {
@@ -204,7 +206,7 @@ export class CarsService {
     const whereCondition: Prisma.CarWhereUniqueInput =
       user.role === Role.ADMIN
         ? { id: carId }
-        : { id: carId, ownerId: user.id };
+        : { id: carId, ownerId: user.id, deletedAt: null };
 
     const car = await this.prisma.car.findUnique({
       where: whereCondition,
@@ -238,7 +240,7 @@ export class CarsService {
 
 
   const car = await this.prisma.car.findUnique({
-    where: { id: carId },
+    where: { id: carId, deletedAt: null },
     select: {
       ownerId: true,
       carImgPublicId: true,
@@ -339,6 +341,18 @@ export class CarsService {
 
       const activeBookings:BookingStatus[] = ['PENDING','APPROVED','IN_PROGRESS']
 
+      const car = await this.prisma.car.findUnique({
+          where:{
+             id: carId,
+             deletedAt: null,
+          
+          },
+          select: {
+              bookings: {
+                where: {status: {in: activeBookings}},
+              select: {id: true}, take: 1}
+          }
+      })
     
      
       try {
