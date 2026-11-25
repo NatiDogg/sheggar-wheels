@@ -419,5 +419,35 @@ async deleteCar(carId: string, ownerId: string) {
 }
 
 
-  async updateCarStatus() {}
+ async updateCarStatus(carId: string, status: CarStatus) {
+  try {
+    const updatedCar = await this.prisma.car.update({
+      where: {
+        id: carId,
+        deletedAt: null,
+        status: CarStatus.PENDING,
+      },
+      data: {
+        status,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Car status updated successfully',
+      data: updatedCar,
+    };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      throw new ConflictException(
+        'This car is no longer pending review. It may have already been reviewed or deleted.',
+      );
+    }
+
+    throw error;
+  }
+}
 }
