@@ -9,6 +9,7 @@ model Car {
   carImg          String
   carImgPublicId  String
   status          CarStatus    @default(PENDING)
+  deletedAt       DateTime?    
 
   owner           User         @relation(fields: [ownerId], references: [id])
   ownerId         String

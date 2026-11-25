@@ -142,6 +142,8 @@ export class CarsService {
     const whereCondition: Prisma.CarWhereInput = {
       ...queryCondition,
       status: CarStatus.APPROVED,
+      deletedAt: null
+      
     };
 
     const [cars, totalItems] = await Promise.all([
@@ -190,7 +192,7 @@ export class CarsService {
 
   async getMyCars(ownerId: string) {
     const cars = await this.prisma.car.findMany({
-      where: { ownerId },
+      where: { ownerId, deletedAt: null },
     });
 
     return {
@@ -204,7 +206,7 @@ export class CarsService {
     const whereCondition: Prisma.CarWhereUniqueInput =
       user.role === Role.ADMIN
         ? { id: carId }
-        : { id: carId, ownerId: user.id };
+        : { id: carId, ownerId: user.id, deletedAt: null };
 
     const car = await this.prisma.car.findUnique({
       where: whereCondition,
@@ -238,7 +240,7 @@ export class CarsService {
 
 
   const car = await this.prisma.car.findUnique({
-    where: { id: carId },
+    where: { id: carId, deletedAt: null },
     select: {
       ownerId: true,
       carImgPublicId: true,
@@ -325,6 +327,9 @@ export class CarsService {
     }
   }
 
+
+  //emit event for the admin to let know a specific car has been updated here
+
   return {
     success: true,
     message: 'Car Updated Successfully',
@@ -332,7 +337,87 @@ export class CarsService {
   };
 }
 
-  async deleteCar(carId: string, ownerId: string) {}
+
+async deleteCar(carId: string, ownerId: string) {
+  const activeBookings: BookingStatus[] = [
+    'PENDING',
+    'APPROVED',
+    'IN_PROGRESS',
+  ];
+
+
+  const car = await this.prisma.car.findUnique({
+    where: {
+      id: carId,
+      deletedAt: null,
+    },
+    select: {
+      ownerId: true,
+      bookings: {
+        where: {
+          status: { in: activeBookings },
+        },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+
+  if (!car) {
+    throw new NotFoundException('Car Not Found!');
+  }
+
+
+  if (car.ownerId !== ownerId) {
+    throw new ForbiddenException(
+      'You are not authorized to delete someone else’s car',
+    );
+  }
+
+
+  if (car.bookings.length > 0) {
+    throw new BadRequestException(
+      'Cannot delete a car with active bookings',
+    );
+  }
+
+  // Performing a conditional soft delete
+  try {
+    await this.prisma.car.update({
+      where: {
+        id: carId,
+        ownerId,
+        deletedAt: null,
+        bookings: {
+          none: {
+            status: { in: activeBookings },
+          },
+        },
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Car deactivated successfully',
+    };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      throw new ConflictException(
+        'Car could not be deleted. Its ownership or booking state may have changed.',
+      );
+    }
+
+    throw error;
+  }
+}
+
 
   async updateCarStatus() {}
 }
