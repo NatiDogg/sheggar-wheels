@@ -236,7 +236,7 @@ export class CarsService {
     );
   }
 
-  const activeStatuses: BookingStatus[] = ['PENDING', 'APPROVED'];
+  const activeStatuses: BookingStatus[] = ['PENDING', 'APPROVED','IN_PROGRESS'];
 
 
   const car = await this.prisma.car.findUnique({
@@ -280,6 +280,7 @@ export class CarsService {
     updatedCar = await this.prisma.car.update({
       where: {
         id: carId,
+        deletedAt: null,
         ownerId,
         bookings: { none: { status: { in: activeStatuses } } },
       },
