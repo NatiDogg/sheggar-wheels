@@ -150,20 +150,7 @@ export class CarsService {
       this.prisma.car.findMany({
         where: whereCondition,
 
-        select: {
-          id: true,
-          make: true,
-          description: true,
-          year: true,
-          price: true,
-          carImg: true,
-          createdAt: true,
-          owner: { select: { name: true, email: true, profileImg: true } },
-          seatingCapacity: true,
-          model: true,
-          updatedAt: true,
-          status: true,
-        },
+        select: carSelect,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -203,27 +190,27 @@ export class CarsService {
   }
 
   async getCar(carId: string, user: { id: string; role: Role }) {
-    const whereCondition: Prisma.CarWhereUniqueInput =
-      user.role === Role.ADMIN
-        ? { id: carId }
-        : { id: carId, ownerId: user.id, deletedAt: null };
+  const whereCondition: Prisma.CarWhereInput =
+    user.role === Role.ADMIN
+      ? { id: carId }
+      : { id: carId, ownerId: user.id, deletedAt: null };
 
-    const car = await this.prisma.car.findUnique({
-      where: whereCondition,
-    });
+  const car = await this.prisma.car.findFirst({
+    where: whereCondition,
+  });
 
-    if (!car) {
-      throw new NotFoundException('Car not found!');
-    }
-
-    return {
-      success: true,
-      message: 'Car retrieved successfully',
-      data: car,
-    };
+  if (!car) {
+    throw new NotFoundException('Car not found!');
   }
 
- async updateCar(
+  return {
+    success: true,
+    message: 'Car retrieved successfully',
+    data: car,
+  };
+}
+
+async updateCar(
   updateCarDetails: UpdateCarDto,
   ownerId: string,
   carId: string,
@@ -236,14 +223,17 @@ export class CarsService {
     );
   }
 
-  const activeStatuses: BookingStatus[] = ['PENDING', 'APPROVED','IN_PROGRESS'];
-
+  const activeStatuses: BookingStatus[] = ['PENDING', 'APPROVED', 'IN_PROGRESS'];
 
   const car = await this.prisma.car.findUnique({
     where: { id: carId, deletedAt: null },
     select: {
       ownerId: true,
       carImgPublicId: true,
+      make: true,
+      model: true,
+      year: true,
+      seatingCapacity: true,
       bookings: {
         where: { status: { in: activeStatuses } },
         select: { id: true },
@@ -269,14 +259,25 @@ export class CarsService {
   const oldCarCloudinaryPublicId = car.carImgPublicId;
   let uploadedImage: UploadApiResponse | undefined;
   let updatedCar: Car;
+  let requiresReapproval = false;
 
   try {
-    
     if (carImgFile) {
       uploadedImage = await this.cloudinaryService.uploadImage(carImgFile);
     }
 
-    
+  requiresReapproval =
+  Boolean(uploadedImage) ||
+  (updateCarDetails.make !== undefined &&
+    updateCarDetails.make.trim().toLowerCase() !==
+      car.make.trim().toLowerCase() ) ||
+  (updateCarDetails.model !== undefined &&
+    updateCarDetails.model.trim().toLowerCase() !==
+      car.model.trim().toLowerCase()) ||
+  (updateCarDetails.year !== undefined && updateCarDetails.year !== car.year) ||
+  (updateCarDetails.seatingCapacity !== undefined &&
+    updateCarDetails.seatingCapacity !== car.seatingCapacity);
+
     updatedCar = await this.prisma.car.update({
       where: {
         id: carId,
@@ -290,11 +291,12 @@ export class CarsService {
           carImg: uploadedImage.secure_url,
           carImgPublicId: uploadedImage.public_id,
         }),
-        status: CarStatus.PENDING,
+        ...(requiresReapproval && {
+          status: CarStatus.PENDING,
+        }),
       },
     });
   } catch (error) {
-
     if (uploadedImage?.public_id) {
       try {
         await this.cloudinaryService.deleteImage(uploadedImage.public_id);
@@ -317,7 +319,6 @@ export class CarsService {
     throw error;
   }
 
-
   if (uploadedImage && oldCarCloudinaryPublicId) {
     try {
       await this.cloudinaryService.deleteImage(oldCarCloudinaryPublicId);
@@ -328,12 +329,22 @@ export class CarsService {
     }
   }
 
-
-  //emit event for the admin to let know a specific car has been updated here
+  if (requiresReapproval) {
+    this.carEventsService.emitCarRegisteredEvent({
+      carId: updatedCar.id,
+      make: updatedCar.make,
+      model: updatedCar.model,
+      year: updatedCar.year,
+      price: updatedCar.price.toNumber(),
+      createdAt: updatedCar.updatedAt,
+    });
+  }
 
   return {
     success: true,
-    message: 'Car Updated Successfully',
+    message: requiresReapproval
+      ? 'Car updated. Awaiting admin re-approval.'
+      : 'Car Updated Successfully',
     data: updatedCar,
   };
 }
