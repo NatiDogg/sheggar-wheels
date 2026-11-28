@@ -9,6 +9,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 
 const trimString = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
@@ -16,7 +17,7 @@ const trimString = ({ value }: { value: unknown }) =>
 const MAX_YEAR = new Date().getFullYear() + 1;
 const MAX_PRICE = 99999999.99;
 
-export class QueryCarDto {
+export class QueryCarDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     description: 'Search term matched against car make, model, or description',
     example: 'Corolla',
