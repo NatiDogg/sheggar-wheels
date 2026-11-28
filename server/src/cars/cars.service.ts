@@ -42,6 +42,8 @@ const carSelect = {
 export type CarListItem = Prisma.CarGetPayload<{
   select: typeof carSelect;
 }>;
+
+type CarFilters = Omit<QueryCarDto, keyof PaginationQueryDto>;
 @Injectable()
 export class CarsService {
   private logger = new Logger(CarsService.name);
@@ -105,7 +107,7 @@ export class CarsService {
 
   //TO-DO: get feedbacks  and let public users see the rating for the car or booking
   async getCars(
-    query: QueryCarDto,
+    query: CarFilters,
     pagination: PaginationQueryDto,
   ): Promise<PaginationResponse<CarListItem>> {
     const { search, minPrice, maxPrice, minYear, maxYear, minSeatingCapacity } =
