@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/createCarDto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -50,8 +50,6 @@ export class CarsController {
                
        }
 
-
-
        @Roles(Role.USER)
        @UseGuards(JwtAuthGuard,RolesGuard)
        @Patch('update/:id')
@@ -64,5 +62,16 @@ export class CarsController {
                fileIsRequired: false
        })) imageFile?:Express.Multer.File, ){
             return await this.carsService.updateCar(updateDetails, user.id, carId, imageFile)
+       }
+
+
+       @Patch('')
+       async updateCarStatus(){
+
+       }
+
+       @Delete('')
+       async deleteCar(){
+              
        }
 }
