@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/createCarDto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -9,6 +9,8 @@ import { Role } from 'prisma/generated/prisma/enums';
 import { CurrentUser } from 'src/auth/decorators/currentUserDecorator';
 import { User } from 'prisma/generated/prisma/client';
 import { UpdateCarDto } from './dto/updateCarDto';
+import { QueryCarDto } from './dto/queryCarDto';
+import { PaginationQueryDto } from 'src/common/pagination/dto/paginationQueryDto';
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; 
 const ALLOWED_IMAGE_MIME_REGEX = /^image\/(jpeg|jpg|png|webp)$/;
@@ -36,7 +38,12 @@ export class CarsController {
 
 
        @Get('')
-       async getCars(){
+       async getCars(@Query() query: QueryCarDto, @Query() pagination:PaginationQueryDto){
+
+
+              return await this.carsService.getCars(query,pagination)
+                
+
 
        }
 
@@ -72,6 +79,6 @@ export class CarsController {
 
        @Delete('')
        async deleteCar(){
-              
+
        }
 }
