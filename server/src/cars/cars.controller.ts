@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, Get, MaxFileSizeValidator, Param, ParseFilePipe, ParseUUIDPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto } from './dto/createCarDto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,7 +23,7 @@ export class CarsController {
        @UseGuards(JwtAuthGuard,RolesGuard)
        @Post('register')
        @UseInterceptors(FileInterceptor('carImg'))
-       async registerCar(@Body() carDetails:CreateCarDto, @UploadedFile(new ParseFilePipe({
+       async createCar(@Body() carDetails:CreateCarDto, @UploadedFile(new ParseFilePipe({
                validators:[
                       new MaxFileSizeValidator({ maxSize: MAX_IMAGE_SIZE_BYTES }),
                       new FileTypeValidator({ fileType: ALLOWED_IMAGE_MIME_REGEX }),
@@ -32,6 +32,22 @@ export class CarsController {
        })) imagefile: Express.Multer.File, @CurrentUser() user:Omit<User,'password'>){   
               
          return await this.carsService.createCar(carDetails, imagefile, user.id)
+       }
+
+
+       @Get('')
+       async getCars(){
+
+       }
+
+       @Get('')
+       async getMyCar(){
+
+       }
+
+       @Get('')
+       async getCar(){
+               
        }
 
 
